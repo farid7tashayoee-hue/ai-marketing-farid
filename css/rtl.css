@@ -1,0 +1,16 @@
+/* ============================================================
+   RTL adjustments — Persian (fa)
+   ============================================================ */
+
+html[dir="rtl"] body { text-align: right; }
+
+html[dir="rtl"] .hero__tagline { margin-inline: 0; }
+
+/* Timeline mirrors automatically via logical props; fix dot blink */
+html[dir="rtl"] .hero__scroll { left: auto; right: 50%; transform: translateX(50%); }
+html[dir="rtl"] .hero__scroll span { left: auto; right: 50%; transform: translateX(50%); }
+
+/* Slightly looser line-height for Persian readability */
+html[dir="rtl"] body { line-height: 1.85; }
+
+/* Typewriter caret on the correct side handled by border-inline-end */

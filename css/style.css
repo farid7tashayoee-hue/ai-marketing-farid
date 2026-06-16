@@ -186,57 +186,15 @@ section { padding: clamp(4rem, 10vw, 8rem) clamp(1.2rem, 5vw, 3.5rem); }
 .pillar h3 { font-size: 1.25rem; }
 .pillar p { color: var(--text-dim); margin-top: .7rem; font-size: .96rem; }
 
-/* Results — Bento Glassmorphism */
+/* Results */
 .results__grid { max-width: var(--max); margin-inline: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-.rcard {
-  position: relative;
-  background: linear-gradient(135deg, rgba(8,80,65,.55) 0%, rgba(5,31,26,.8) 100%);
-  border: 1px solid rgba(29,158,117,.25);
-  border-radius: 20px;
-  padding: 2rem 2.2rem;
-  overflow: hidden;
-  cursor: default;
-  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s;
-  box-shadow: 0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(29,158,117,.12);
-  backdrop-filter: blur(12px);
-}
-.rcard::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at top right, rgba(29,158,117,.2) 0%, transparent 65%);
-  pointer-events: none;
-}
-.rcard::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(29,158,117,.08) 0%, transparent 50%);
-  pointer-events: none;
-}
-.rcard:hover {
-  transform: translateY(-5px);
-  border-color: rgba(29,158,117,.55);
-  box-shadow: 0 12px 40px rgba(0,0,0,.4), 0 0 30px rgba(29,158,117,.15), inset 0 1px 0 rgba(29,158,117,.2);
-}
+.rcard { position: relative; background: #0a2e27; border: 1px solid #1a5c4a; border-radius: 18px; padding: 2rem 2.2rem; overflow: hidden; cursor: default; transition: transform .3s var(--ease), border-color .3s, box-shadow .3s; box-shadow: 0 2px 16px rgba(0,0,0,.4); }
+.rcard::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(29,158,117,.5), transparent); }
+.rcard:hover { transform: translateY(-4px); border-color: #1D9E75; box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 20px rgba(29,158,117,.12); }
 .rcard--wide { grid-column: span 2; }
-.rcard__metric {
-  font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 3.2rem;
-  line-height: 1;
-  margin-bottom: .9rem;
-  background: linear-gradient(135deg, #1D9E75 0%, #378ADD 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 20px rgba(29,158,117,.5));
-  position: relative;
-  z-index: 1;
-}
-.rcard h3 { font-size: 1.1rem; font-weight: 600; position: relative; z-index: 1; }
-.rcard p { color: var(--text-dim); margin-top: .5rem; font-size: .9rem; position: relative; z-index: 1; line-height: 1.6; }
+.rcard__metric { font-family: var(--font-head); font-weight: 800; font-size: 3rem; color: #1D9E75; line-height: 1; margin-bottom: .8rem; }
+.rcard h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+.rcard p { color: var(--text-dim); margin-top: .45rem; font-size: .88rem; line-height: 1.65; }
 
 /* Timeline */
 .timeline { max-width: 760px; margin-inline: auto; position: relative; padding-inline-start: 2rem; }

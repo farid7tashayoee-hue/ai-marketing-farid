@@ -186,18 +186,57 @@ section { padding: clamp(4rem, 10vw, 8rem) clamp(1.2rem, 5vw, 3.5rem); }
 .pillar h3 { font-size: 1.25rem; }
 .pillar p { color: var(--text-dim); margin-top: .7rem; font-size: .96rem; }
 
-/* Results */
-.results__grid { max-width: var(--max); margin-inline: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-.rcard { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.2rem; overflow: hidden; transition: transform .35s var(--ease), border-color .35s; cursor: default; }
-.rcard::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(29,158,117,.18), transparent 60%); opacity: 0; transition: opacity .4s; }
-.rcard::after { content: ""; position: absolute; top: 0; inset-inline-start: 0; width: 3px; height: 100%; background: linear-gradient(var(--teal-growth), transparent); border-radius: 3px 0 0 3px; opacity: .6; }
-.rcard:hover { transform: translateY(-6px); border-color: var(--border-hi); }
-.rcard:hover::before { opacity: 1; }
-.rcard__metric { font-family: var(--font-head); font-weight: 800; font-size: 2.8rem; color: var(--teal-growth); line-height: 1; margin-bottom: 1rem; text-shadow: 0 0 40px rgba(29,158,117,.4); }
-.rcard h3 { font-size: 1.2rem; position: relative; }
-.rcard p { color: var(--text-dim); margin-top: .6rem; font-size: .94rem; position: relative; }
-.rcard.reveal-up { opacity: 1; transform: translateY(30px); }
-.rcard.reveal-up.in { transform: translateY(0); }
+/* Results — Bento Glassmorphism */
+.results__grid { max-width: var(--max); margin-inline: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+.rcard {
+  position: relative;
+  background: linear-gradient(135deg, rgba(8,80,65,.55) 0%, rgba(5,31,26,.8) 100%);
+  border: 1px solid rgba(29,158,117,.25);
+  border-radius: 20px;
+  padding: 2rem 2.2rem;
+  overflow: hidden;
+  cursor: default;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s;
+  box-shadow: 0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(29,158,117,.12);
+  backdrop-filter: blur(12px);
+}
+.rcard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, rgba(29,158,117,.2) 0%, transparent 65%);
+  pointer-events: none;
+}
+.rcard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(29,158,117,.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+.rcard:hover {
+  transform: translateY(-5px);
+  border-color: rgba(29,158,117,.55);
+  box-shadow: 0 12px 40px rgba(0,0,0,.4), 0 0 30px rgba(29,158,117,.15), inset 0 1px 0 rgba(29,158,117,.2);
+}
+.rcard--wide { grid-column: span 2; }
+.rcard__metric {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 3.2rem;
+  line-height: 1;
+  margin-bottom: .9rem;
+  background: linear-gradient(135deg, #1D9E75 0%, #378ADD 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(29,158,117,.5));
+  position: relative;
+  z-index: 1;
+}
+.rcard h3 { font-size: 1.1rem; font-weight: 600; position: relative; z-index: 1; }
+.rcard p { color: var(--text-dim); margin-top: .5rem; font-size: .9rem; position: relative; z-index: 1; line-height: 1.6; }
 
 /* Timeline */
 .timeline { max-width: 760px; margin-inline: auto; position: relative; padding-inline-start: 2rem; }
@@ -287,7 +326,9 @@ section { padding: clamp(4rem, 10vw, 8rem) clamp(1.2rem, 5vw, 3.5rem); }
   .nav__links.open { transform: translateY(0); }
   .nav__burger { display: flex; margin-inline-start: auto; order: 3; }
   .lang-switch { order: 2; }
-  .pillars, .results__grid, .certs { grid-template-columns: 1fr; }
+  .pillars, .certs { grid-template-columns: 1fr; }
+  .results__grid { grid-template-columns: 1fr; }
+  .rcard--wide { grid-column: span 1; }
   .hero__stats { grid-template-columns: repeat(2, 1fr); gap: 1.6rem; }
   .footer { flex-direction: column; }
   .btn--whatsapp { width: 100%; justify-content: center; }

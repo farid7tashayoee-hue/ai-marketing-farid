@@ -196,6 +196,8 @@ section { padding: clamp(4rem, 10vw, 8rem) clamp(1.2rem, 5vw, 3.5rem); }
 .rcard__metric { font-family: var(--font-head); font-weight: 800; font-size: 2.8rem; color: var(--teal-growth); line-height: 1; margin-bottom: 1rem; text-shadow: 0 0 40px rgba(29,158,117,.4); }
 .rcard h3 { font-size: 1.2rem; position: relative; }
 .rcard p { color: var(--text-dim); margin-top: .6rem; font-size: .94rem; position: relative; }
+.rcard.reveal-up { opacity: 1; transform: translateY(30px); }
+.rcard.reveal-up.in { transform: translateY(0); }
 
 /* Timeline */
 .timeline { max-width: 760px; margin-inline: auto; position: relative; padding-inline-start: 2rem; }

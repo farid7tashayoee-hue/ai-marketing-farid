@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    i18n — EN (default) / FA / FR
    ============================================================ */
 
@@ -20,14 +20,14 @@ const I18N = {
     pillar2_t: "AI Automation", pillar2_d: "Building real tools with the Gemini API — turning thousands of comments into content strategy.",
     pillar3_t: "Content Strategy", pillar3_d: "Decisions backed by data, not theory. Every claim comes with a number, a rank, or a result.",
     results_tag: "PROVEN RESULTS", results_title: "Numbers, not promises.",
-    res1_t: "Google rankings in the gold niche", res1_d: "Exiraz — “buy gold bullion”, “gold bullion price”, “24k bullion”.",
+    res1_t: "Google rankings in the gold niche", res1_d: "Exiraz — 'buy gold bullion', 'gold bullion price', '24k bullion'.",
     res2_t: "Free Digikala comment-analysis tool", res2_d: "Built on the Gemini API — used in real content strategy. seo.irandevs.com",
     res3_t: "JetSEO webinar instructor", res3_d: "37-slide deck on using AI in SEO — thousands of views.",
-    res4_t: “Built an SEO team from scratch”, res4_d: “Technolife — #1–5 for “buy fridge”, “buy washing machine”, “buy phone”.”,
-    res5_t: “Google rankings in the insurance niche”, res5_d: “Bimeh.com — “خرید بیمه”, “بیمه شخص ثالث”, “بیمه بدنه”.”,
-    res6_t: “Google rankings in home appliance warranty”, res6_d: “Goldiran — “بیمه لوازم خانگی”, “بیمه لباسشویی”, “بیمه تلویزیون”, “بیمه ماکروفر”.”,
-    res7_t: “SEO & web design — stone niche”, res7_d: “Iran Bazalt — “خرید سنگ بازالت”, “قیمت سنگ بازالت”.”,
-    exp_tag: “THE JOURNEY”, exp_title: “Experience”,
+    res4_t: "Built an SEO team from scratch", res4_d: "Technolife — #1–5 for 'buy fridge', 'buy washing machine', 'buy phone'.",
+    res5_t: "Google rankings in the insurance niche", res5_d: "Bimeh.com — 'خرید بیمه', 'بیمه شخص ثالث', 'بیمه بدنه'.",
+    res6_t: "Google rankings in home appliance warranty", res6_d: "Goldiran — 'بیمه لوازم خانگی', 'بیمه لباسشویی', 'بیمه تلویزیون', 'بیمه ماکروفر'.",
+    res7_t: "SEO & web design — stone niche", res7_d: "Iran Bazalt — 'خرید سنگ بازالت', 'قیمت سنگ بازالت'.",
+    exp_tag: "THE JOURNEY", exp_title: "Experience",
     exp1: "#1–5 Google rankings: gold bullion buy, price & 24k.",
     exp2: "Built the SEO team from zero — top rankings for major appliance & mobile keywords.",
     exp3: "SEO in the home-appliance sector.",

@@ -48,6 +48,19 @@
       box-shadow: 0 18px 52px rgba(0,0,0,.55), 0 0 36px var(--ac-glow, rgba(29,158,117,.2)) !important;
     }
     .rcard--wide { grid-column: span 2 !important; }
+    .rcard__head {
+      display: flex !important; align-items: center !important;
+      gap: .65rem !important; margin-bottom: 1rem !important;
+    }
+    .rcard__icon {
+      width: 38px !important; height: 38px !important; flex-shrink: 0 !important;
+      border-radius: 10px !important; display: flex !important;
+      align-items: center !important; justify-content: center !important;
+      font-size: .8rem !important; font-weight: 800 !important; letter-spacing: .01em !important;
+      color: var(--ac1, #1D9E75) !important;
+      background: var(--ac-bg, rgba(29,158,117,.14)) !important;
+      border: 1px solid var(--ac-border, rgba(29,158,117,.45)) !important;
+    }
     .rcard__tag {
       display: inline-block !important;
       font-size: .68rem !important; font-weight: 700 !important; letter-spacing: .1em !important;
@@ -55,7 +68,7 @@
       background: var(--ac-bg, rgba(29,158,117,.14)) !important;
       border: 1px solid var(--ac-border, rgba(29,158,117,.45)) !important;
       border-radius: 999px !important; padding: .22rem .8rem !important;
-      margin-bottom: 1rem !important;
+      margin: 0 !important;
     }
     .rcard__metric {
       font-size: 3rem !important; font-weight: 800 !important; line-height: 1 !important;
@@ -71,6 +84,7 @@
     .rcard--rose      { --ac1:#E0698A; --ac2:#FFA9C1; --ac-bg:rgba(224,105,138,.14); --ac-border:rgba(224,105,138,.45); --ac-glow:rgba(224,105,138,.22); }
     .rcard--orange    { --ac1:#E08A3A; --ac2:#FFC585; --ac-bg:rgba(224,138,58,.14); --ac-border:rgba(224,138,58,.45); --ac-glow:rgba(224,138,58,.22); }
     .rcard--slate     { --ac1:#7B97A8; --ac2:#C2D6E0; --ac-bg:rgba(123,151,168,.14); --ac-border:rgba(123,151,168,.45); --ac-glow:rgba(123,151,168,.22); }
+    .rcard--cyan      { --ac1:#33B8C9; --ac2:#9BE8F0; --ac-bg:rgba(51,184,201,.14); --ac-border:rgba(51,184,201,.45); --ac-glow:rgba(51,184,201,.22); }
     .rcard h3 {
       font-size: 1rem !important; font-weight: 600 !important;
       color: #E1F5EE !important; line-height: 1.4 !important; margin: 0 0 .45rem !important;
@@ -178,46 +192,52 @@
     </div>
     <div class="results__grid">
       <article class="rcard rcard--wide rcard--gold">
-        <span class="rcard__tag">SEO · Gold</span>
+        <div class="rcard__head"><div class="rcard__icon">EX</div><span class="rcard__tag">SEO · Gold</span></div>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res1_t">Google rankings in the gold niche</h3>
         <p data-i18n="res1_d">Exiraz — "buy gold bullion", "gold bullion price", "24k bullion".</p>
       </article>
       <article class="rcard rcard--blue">
-        <span class="rcard__tag">AI Tool</span>
+        <div class="rcard__head"><div class="rcard__icon">DK</div><span class="rcard__tag">AI Tool</span></div>
         <div class="rcard__metric">AI</div>
         <h3 data-i18n="res2_t">Free Digikala comment-analysis tool</h3>
         <p data-i18n="res2_d">Built on the Gemini API — used in real content strategy. seo.irandevs.com</p>
       </article>
       <article class="rcard rcard--purple">
-        <span class="rcard__tag">Speaking</span>
+        <div class="rcard__head"><div class="rcard__icon">JS</div><span class="rcard__tag">Speaking</span></div>
         <div class="rcard__metric">37</div>
         <h3 data-i18n="res3_t">JetSEO webinar instructor</h3>
         <p data-i18n="res3_d">37-slide deck on using AI in SEO — thousands of views.</p>
       </article>
       <article class="rcard rcard--teal">
-        <span class="rcard__tag">Team Building</span>
+        <div class="rcard__head"><div class="rcard__icon">TL</div><span class="rcard__tag">Team Building</span></div>
         <div class="rcard__metric">0→1</div>
         <h3 data-i18n="res4_t">Built an SEO team from scratch</h3>
         <p data-i18n="res4_d">Technolife — #1–5 for "buy fridge", "buy washing machine", "buy phone".</p>
       </article>
       <article class="rcard rcard--wide rcard--rose">
-        <span class="rcard__tag">Insurance · بیمه</span>
+        <div class="rcard__head"><div class="rcard__icon">B.</div><span class="rcard__tag">Insurance · بیمه</span></div>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res5_t">Google rankings in the insurance niche</h3>
         <p data-i18n="res5_d">Bimeh.com — "خرید بیمه", "بیمه شخص ثالث", "بیمه بدنه".</p>
       </article>
       <article class="rcard rcard--orange">
-        <span class="rcard__tag">Appliances</span>
+        <div class="rcard__head"><div class="rcard__icon">GI</div><span class="rcard__tag">Appliances</span></div>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res6_t">Google rankings in home appliance warranty</h3>
         <p data-i18n="res6_d">Goldiran — "بیمه لوازم خانگی", "بیمه لباسشویی", "بیمه تلویزیون", "بیمه ماکروفر".</p>
       </article>
       <article class="rcard rcard--slate">
-        <span class="rcard__tag">Stone · Design</span>
+        <div class="rcard__head"><div class="rcard__icon">IB</div><span class="rcard__tag">Stone · Design</span></div>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res7_t">SEO &amp; web design — stone niche</h3>
         <p data-i18n="res7_d">Iran Bazalt — "خرید سنگ بازالت", "قیمت سنگ بازالت".</p>
+      </article>
+      <article class="rcard rcard--wide rcard--cyan">
+        <div class="rcard__head"><div class="rcard__icon">ES</div><span class="rcard__tag">Seminars</span></div>
+        <div class="rcard__metric">5+</div>
+        <h3 data-i18n="res8_t">AI &amp; SEO seminar series</h3>
+        <p data-i18n="res8_d">Hosted on eseminar.tv via Publica — talks on using AI to find hidden SEO opportunities, AI-driven search visibility, and data-led SEO strategy.</p>
       </article>
     </div>
   </section>

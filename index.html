@@ -40,35 +40,37 @@
     .rcard::before {
       content: "";
       position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, #1D9E75 0%, #378ADD 60%, transparent 100%);
+      background: linear-gradient(90deg, var(--ac1, #1D9E75) 0%, var(--ac2, #378ADD) 60%, transparent 100%);
     }
     .rcard:hover {
       transform: translateY(-6px) !important;
-      border-color: #1D9E75 !important;
-      box-shadow: 0 18px 52px rgba(0,0,0,.55), 0 0 36px rgba(29,158,117,.2) !important;
+      border-color: var(--ac1, #1D9E75) !important;
+      box-shadow: 0 18px 52px rgba(0,0,0,.55), 0 0 36px var(--ac-glow, rgba(29,158,117,.2)) !important;
     }
     .rcard--wide { grid-column: span 2 !important; }
     .rcard__tag {
       display: inline-block !important;
       font-size: .68rem !important; font-weight: 700 !important; letter-spacing: .1em !important;
-      text-transform: uppercase !important; color: #1D9E75 !important;
-      background: rgba(29,158,117,.14) !important;
-      border: 1px solid rgba(29,158,117,.45) !important;
+      text-transform: uppercase !important; color: var(--ac1, #1D9E75) !important;
+      background: var(--ac-bg, rgba(29,158,117,.14)) !important;
+      border: 1px solid var(--ac-border, rgba(29,158,117,.45)) !important;
       border-radius: 999px !important; padding: .22rem .8rem !important;
       margin-bottom: 1rem !important;
-    }
-    .rcard__tag--blue {
-      color: #378ADD !important;
-      background: rgba(55,138,221,.12) !important;
-      border-color: rgba(55,138,221,.4) !important;
     }
     .rcard__metric {
       font-size: 3rem !important; font-weight: 800 !important; line-height: 1 !important;
       margin-bottom: .65rem !important; display: block !important;
-      background: linear-gradient(120deg, #1D9E75 0%, #378ADD 100%) !important;
+      background: linear-gradient(120deg, var(--ac1, #1D9E75) 0%, var(--ac2, #378ADD) 100%) !important;
       -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
       background-clip: text !important;
     }
+    .rcard--gold     { --ac1:#E0B23A; --ac2:#F4D58D; --ac-bg:rgba(224,178,58,.14); --ac-border:rgba(224,178,58,.45); --ac-glow:rgba(224,178,58,.22); }
+    .rcard--blue      { --ac1:#378ADD; --ac2:#7AC6FF; --ac-bg:rgba(55,138,221,.14); --ac-border:rgba(55,138,221,.45); --ac-glow:rgba(55,138,221,.22); }
+    .rcard--purple   { --ac1:#9B6BE0; --ac2:#C9A6FF; --ac-bg:rgba(155,107,224,.14); --ac-border:rgba(155,107,224,.45); --ac-glow:rgba(155,107,224,.22); }
+    .rcard--teal      { --ac1:#1D9E75; --ac2:#5FE0B8; --ac-bg:rgba(29,158,117,.14); --ac-border:rgba(29,158,117,.45); --ac-glow:rgba(29,158,117,.22); }
+    .rcard--rose      { --ac1:#E0698A; --ac2:#FFA9C1; --ac-bg:rgba(224,105,138,.14); --ac-border:rgba(224,105,138,.45); --ac-glow:rgba(224,105,138,.22); }
+    .rcard--orange    { --ac1:#E08A3A; --ac2:#FFC585; --ac-bg:rgba(224,138,58,.14); --ac-border:rgba(224,138,58,.45); --ac-glow:rgba(224,138,58,.22); }
+    .rcard--slate     { --ac1:#7B97A8; --ac2:#C2D6E0; --ac-bg:rgba(123,151,168,.14); --ac-border:rgba(123,151,168,.45); --ac-glow:rgba(123,151,168,.22); }
     .rcard h3 {
       font-size: 1rem !important; font-weight: 600 !important;
       color: #E1F5EE !important; line-height: 1.4 !important; margin: 0 0 .45rem !important;
@@ -175,43 +177,43 @@
       <h2 data-i18n="results_title">Numbers, not promises.</h2>
     </div>
     <div class="results__grid">
-      <article class="rcard rcard--wide">
+      <article class="rcard rcard--wide rcard--gold">
         <span class="rcard__tag">SEO · Gold</span>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res1_t">Google rankings in the gold niche</h3>
         <p data-i18n="res1_d">Exiraz — "buy gold bullion", "gold bullion price", "24k bullion".</p>
       </article>
-      <article class="rcard">
-        <span class="rcard__tag rcard__tag--blue">AI Tool</span>
+      <article class="rcard rcard--blue">
+        <span class="rcard__tag">AI Tool</span>
         <div class="rcard__metric">AI</div>
         <h3 data-i18n="res2_t">Free Digikala comment-analysis tool</h3>
         <p data-i18n="res2_d">Built on the Gemini API — used in real content strategy. seo.irandevs.com</p>
       </article>
-      <article class="rcard">
+      <article class="rcard rcard--purple">
         <span class="rcard__tag">Speaking</span>
         <div class="rcard__metric">37</div>
         <h3 data-i18n="res3_t">JetSEO webinar instructor</h3>
         <p data-i18n="res3_d">37-slide deck on using AI in SEO — thousands of views.</p>
       </article>
-      <article class="rcard">
+      <article class="rcard rcard--teal">
         <span class="rcard__tag">Team Building</span>
         <div class="rcard__metric">0→1</div>
         <h3 data-i18n="res4_t">Built an SEO team from scratch</h3>
         <p data-i18n="res4_d">Technolife — #1–5 for "buy fridge", "buy washing machine", "buy phone".</p>
       </article>
-      <article class="rcard rcard--wide">
+      <article class="rcard rcard--wide rcard--rose">
         <span class="rcard__tag">Insurance · بیمه</span>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res5_t">Google rankings in the insurance niche</h3>
         <p data-i18n="res5_d">Bimeh.com — "خرید بیمه", "بیمه شخص ثالث", "بیمه بدنه".</p>
       </article>
-      <article class="rcard">
+      <article class="rcard rcard--orange">
         <span class="rcard__tag">Appliances</span>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res6_t">Google rankings in home appliance warranty</h3>
         <p data-i18n="res6_d">Goldiran — "بیمه لوازم خانگی", "بیمه لباسشویی", "بیمه تلویزیون", "بیمه ماکروفر".</p>
       </article>
-      <article class="rcard">
+      <article class="rcard rcard--slate">
         <span class="rcard__tag">Stone · Design</span>
         <div class="rcard__metric">#1–5</div>
         <h3 data-i18n="res7_t">SEO &amp; web design — stone niche</h3>

@@ -18,6 +18,7 @@
 .reveal-up[data-delay="2"] { transition-delay: .16s; }
 .reveal-up[data-delay="3"] { transition-delay: .24s; }
 .reveal-up[data-delay="4"] { transition-delay: .32s; }
+.reveal-up[data-delay="5"] { transition-delay: .4s; }
 
 /* Typewriter caret blink */
 .typewriter { animation: caret .8s step-end infinite; }

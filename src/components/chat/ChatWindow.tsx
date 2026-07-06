@@ -15,7 +15,7 @@ export default function ChatWindow({ onClose }: { onClose: () => void }) {
     {
       id: "welcome",
       role: "assistant",
-      content: "سلام! 👋 من دستیار هوشمند فرید تاشایویی هستم. چطور می‌تونم کمکتون کنم؟",
+      content: "سلام! 👋 من Fredy هستم، دستیار فرید. چطور می‌تونم کمکتون کنم؟",
     },
   ]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -69,8 +69,8 @@ export default function ChatWindow({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-sm font-bold text-white">ف</div>
           <div>
-            <p className="text-mint-light text-sm font-bold">فرید تاشایویی</p>
-            <p className="text-secondary text-xs">دستیار هوشمند</p>
+            <p className="text-mint-light text-sm font-bold">Fredy</p>
+            <p className="text-secondary text-xs">دستیار فرید تشیعی</p>
           </div>
         </div>
         <button onClick={onClose} className="text-mint-light/60 hover:text-mint-light transition-colors">

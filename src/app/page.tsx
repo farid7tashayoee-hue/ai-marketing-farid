@@ -1,0 +1,326 @@
+"use client";
+import ChatWidget from "@/components/chat/ChatWidget";
+
+const PAGE_HTML = `
+  <!-- Grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- NAVBAR -->
+  <header class="nav" id="nav">
+    <a href="#hero" class="nav__logo">FT<span>.</span></a>
+    <nav class="nav__links">
+      <a href="#about" data-i18n="nav_about">What I Do</a>
+      <a href="#results" data-i18n="nav_results">Results</a>
+      <a href="#experience" data-i18n="nav_experience">Experience</a>
+      <a href="#skills" data-i18n="nav_skills">Skills</a>
+      <a href="#contact" class="nav__cta" data-i18n="nav_contact">Work With Me</a>
+    </nav>
+    <div class="lang-switch" role="group" aria-label="Language switch">
+      <button class="lang-btn is-active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fa">فا</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
+    <button class="nav__burger" id="burger" aria-label="Menu"><span></span><span></span></button>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero__mesh" aria-hidden="true"></div>
+    <div class="hero__inner">
+      <div class="hero__badge reveal">
+        <span class="hero__badge-dot" aria-hidden="true"></span>
+        <span data-i18n="hero_badge">Available for projects</span>
+      </div>
+      <h1 class="hero__name reveal" data-delay="1">Farid Tashayoee</h1>
+      <div class="hero__role reveal" data-delay="2">
+        <span class="hero__role-static" data-i18n="hero_role_pre">I'm an</span>
+        <span class="typewriter" id="typewriter"></span>
+      </div>
+      <p class="hero__tagline reveal" data-delay="3" data-i18n="hero_tagline">Where Data Meets Proven Growth.</p>
+      <div class="hero__stats reveal" data-delay="4">
+        <div class="stat"><span class="stat__num" data-count="6816">0</span><span class="stat__label" data-i18n="stat_linkedin">LinkedIn followers</span></div>
+        <div class="stat"><span class="stat__num" data-count="500" data-prefix="+">0</span><span class="stat__label" data-i18n="stat_connections">connections</span></div>
+        <div class="stat"><span class="stat__num" data-count="5" data-prefix="+">0</span><span class="stat__label" data-i18n="stat_years">years experience</span></div>
+        <div class="stat"><span class="stat__num" data-count="3">0</span><span class="stat__label" data-i18n="stat_langs">languages</span></div>
+      </div>
+      <div class="hero__actions reveal" data-delay="5">
+        <a href="#contact" class="btn btn--primary" data-i18n="hero_cta1">Work With Me</a>
+        <a href="#results" class="btn btn--ghost" data-i18n="hero_cta2">See Proven Results</a>
+      </div>
+    </div>
+    <div class="hero__scroll" aria-hidden="true"><span></span></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="about">
+    <div class="section-head reveal-up">
+      <span class="section-head__tag" data-i18n="about_tag">THE NEW ROLE</span>
+      <h2 data-i18n="about_title">What is AI Marketing?</h2>
+      <p data-i18n="about_lead">A role that barely has a name yet — so I'm defining it.</p>
+    </div>
+    <div class="pillars">
+      <article class="pillar reveal-up" data-delay="1">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg></div>
+        <h3 data-i18n="pillar1_t">Data-Driven SEO</h3>
+        <p data-i18n="pillar1_d">Ranking competitive keywords on page one.</p>
+      </article>
+      <article class="pillar reveal-up" data-delay="2">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"/></svg></div>
+        <h3 data-i18n="pillar2_t">AI Automation</h3>
+        <p data-i18n="pillar2_d">Building real tools with the Gemini API.</p>
+      </article>
+      <article class="pillar reveal-up" data-delay="3">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg></div>
+        <h3 data-i18n="pillar3_t">Content Strategy</h3>
+        <p data-i18n="pillar3_d">Decisions backed by data, not theory.</p>
+      </article>
+      <article class="pillar reveal-up" data-delay="4">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m9 9a9 9 0 1 1-18 0 9 9 0 1 1 18 0Zm-9-9a8.997 8.997 0 0 1 7.843 4.582M3.07 7.5a8.997 8.997 0 0 1 7.843-4.582M3.07 16.5a8.997 8.997 0 0 0 17.86 0M3.07 7.5h17.86"/></svg></div>
+        <h3 data-i18n="pillar4_t">Digital Marketing</h3>
+        <p data-i18n="pillar4_d">Running the full digital mix.</p>
+      </article>
+      <article class="pillar reveal-up" data-delay="5">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.035-.259a3.375 3.375 0 0 0 2.456-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"/></svg></div>
+        <h3 data-i18n="pillar5_t">Campaign &amp; Performance</h3>
+        <p data-i18n="pillar5_d">Paid campaigns measured by CAC, ROAS, and conversion.</p>
+      </article>
+      <article class="pillar reveal-up" data-delay="6">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg></div>
+        <h3 data-i18n="pillar6_t">Chatbot Development</h3>
+        <p data-i18n="pillar6_d">AI chatbots trained on real data.</p>
+      </article>
+      <article class="pillar reveal-up" data-delay="7">
+        <div class="pillar__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25"/></svg></div>
+        <h3 data-i18n="pillar7_t">Web Design &amp; Landing Pages</h3>
+        <p data-i18n="pillar7_d">High-converting landing pages — fast, on-brand.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results" id="results">
+    <div class="section-head reveal-up">
+      <span class="section-head__tag" data-i18n="results_tag">PROVEN RESULTS</span>
+      <h2 data-i18n="results_title">Numbers, not promises.</h2>
+    </div>
+    <div class="results__grid">
+      <article class="rcard rcard--wide rcard--gold">
+        <div class="rcard__head"><div class="rcard__icon">EX</div><span class="rcard__tag">SEO · Gold</span></div>
+        <div class="rcard__metric">#1–5</div>
+        <h3 data-i18n="res1_t">Google rankings in the gold niche</h3>
+        <p data-i18n="res1_d">Exiraz — "buy gold bullion", "gold bullion price", "24k bullion".</p>
+      </article>
+      <article class="rcard rcard--blue">
+        <div class="rcard__head"><div class="rcard__icon">DK</div><span class="rcard__tag">AI Tool</span></div>
+        <div class="rcard__metric">AI</div>
+        <h3 data-i18n="res2_t">Free Digikala comment-analysis tool</h3>
+        <p data-i18n="res2_d">Built on the Gemini API — used in real content strategy.</p>
+      </article>
+      <article class="rcard rcard--purple">
+        <div class="rcard__head"><div class="rcard__icon">JS</div><span class="rcard__tag">Speaking</span></div>
+        <div class="rcard__metric">37</div>
+        <h3 data-i18n="res3_t">JetSEO webinar instructor</h3>
+        <p data-i18n="res3_d">37-slide deck on using AI in SEO.</p>
+      </article>
+      <article class="rcard rcard--teal">
+        <div class="rcard__head"><div class="rcard__icon">TL</div><span class="rcard__tag">Team Building</span></div>
+        <div class="rcard__metric">0→1</div>
+        <h3 data-i18n="res4_t">Built an SEO team from scratch</h3>
+        <p data-i18n="res4_d">Technolife — #1–5 for major appliance & mobile keywords.</p>
+      </article>
+      <article class="rcard rcard--wide rcard--rose">
+        <div class="rcard__head"><div class="rcard__icon">B.</div><span class="rcard__tag">Insurance · بیمه</span></div>
+        <div class="rcard__metric">#1–5</div>
+        <h3 data-i18n="res5_t">Google rankings in the insurance niche</h3>
+        <p data-i18n="res5_d">Bimeh.com — "خرید بیمه", "بیمه شخص ثالث", "بیمه بدنه".</p>
+      </article>
+      <article class="rcard rcard--orange">
+        <div class="rcard__head"><div class="rcard__icon">GI</div><span class="rcard__tag">Appliances</span></div>
+        <div class="rcard__metric">#1–5</div>
+        <h3 data-i18n="res6_t">Google rankings in home appliance warranty</h3>
+        <p data-i18n="res6_d">Goldiran — "بیمه لوازم خانگی".</p>
+      </article>
+      <article class="rcard rcard--slate">
+        <div class="rcard__head"><div class="rcard__icon">IB</div><span class="rcard__tag">Stone · Design</span></div>
+        <div class="rcard__metric">#1–5</div>
+        <h3 data-i18n="res7_t">SEO &amp; web design — stone niche</h3>
+        <p data-i18n="res7_d">Iran Bazalt — "خرید سنگ بازالت".</p>
+      </article>
+      <article class="rcard rcard--wide rcard--cyan">
+        <div class="rcard__head"><div class="rcard__icon">ES</div><span class="rcard__tag">Seminars</span></div>
+        <div class="rcard__metric">5+</div>
+        <h3 data-i18n="res8_t">AI &amp; SEO seminar series</h3>
+        <p data-i18n="res8_d">Hosted on eseminar.tv — talks on AI-driven SEO strategy.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section class="experience" id="experience">
+    <div class="section-head reveal-up">
+      <span class="section-head__tag" data-i18n="exp_tag">THE JOURNEY</span>
+      <h2 data-i18n="exp_title">Experience</h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-item reveal-up">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-header">
+            <img class="tl-logo" src="https://www.google.com/s2/favicons?domain=exiraz.com&sz=64" alt="Exiraz" onerror="this.style.display='none'" />
+            <div class="tl-info"><span class="tl-date">Oct 2025 – Present</span><h3>Exiraz</h3><span class="tl-role">Digital Marketing Manager</span></div>
+          </div>
+          <p data-i18n="exp1">#1–5 Google rankings: gold bullion buy, price & 24k.</p>
+        </div>
+      </div>
+      <div class="tl-item reveal-up">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-header">
+            <img class="tl-logo" src="https://www.google.com/s2/favicons?domain=technolife.ir&sz=64" alt="Technolife" onerror="this.style.display='none'" />
+            <div class="tl-info"><span class="tl-date">Dec 2023 – Present · 2 yrs 5 mos</span><h3>Technolife | تکنولایف</h3><span class="tl-role">Senior SEO Specialist</span></div>
+          </div>
+          <p data-i18n="exp2">Built the SEO team from zero — top rankings for major keywords.</p>
+        </div>
+      </div>
+      <div class="tl-item reveal-up">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-header">
+            <img class="tl-logo" src="/goldiran.png" alt="Goldiran" onerror="this.style.display='none'" />
+            <div class="tl-info"><span class="tl-date">Feb 2023 – Feb 2025 · 2 yrs 1 mo</span><h3>Goldiran</h3><span class="tl-role">Senior SEO</span></div>
+          </div>
+          <p data-i18n="exp3">SEO in the home-appliance sector.</p>
+        </div>
+      </div>
+      <div class="tl-item reveal-up">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-header">
+            <img class="tl-logo" src="https://www.google.com/s2/favicons?domain=bimeh.com&sz=64" alt="Bimeh.com" onerror="this.style.display='none'" />
+            <div class="tl-info"><span class="tl-date">Jan 2021 – Feb 2023 · 2 yrs 2 mos</span><h3>Bimeh.com | بیمه دات کام</h3><span class="tl-role">SEO Specialist</span></div>
+          </div>
+          <p data-i18n="exp4">SEO for insurance services.</p>
+        </div>
+      </div>
+      <div class="tl-item reveal-up">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-header">
+            <img class="tl-logo" src="/polmarcom.jpg" alt="Pol Marcom" onerror="this.style.display='none'" />
+            <div class="tl-info"><span class="tl-date">Feb 2018 – Jan 2021 · 3 yrs</span><h3>Pol Marcom Agency | آژانس تبلیغاتی پل</h3><span class="tl-role">SEO Specialist · Creative Team</span></div>
+          </div>
+          <p data-i18n="exp5">Rhythmed freelance projects.</p>
+          <div class="tl-clients">
+            <img class="client-logo" src="https://www.google.com/s2/favicons?domain=dove.com&sz=64" alt="Dove" title="Dove" />
+            <img class="client-logo" src="/domestos.jpg" alt="Domestos" title="Domestos" />
+            <img class="client-logo" src="https://www.google.com/s2/favicons?domain=omo.com&sz=64" alt="OMO" title="OMO" />
+            <img class="client-logo" src="/hoffenberg.jpg" alt="Hoffenberg" title="Hoffenberg" />
+            <img class="client-logo" src="https://www.google.com/s2/favicons?domain=bimehday.com&sz=64" alt="بیمه دی" title="Day Insurance" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section class="skills" id="skills">
+    <div class="section-head reveal-up">
+      <span class="section-head__tag" data-i18n="skills_tag">TOOLKIT</span>
+      <h2 data-i18n="skills_title">Skills &amp; Tools</h2>
+    </div>
+    <div class="skills__grid">
+      <span class="chip reveal-up">AI Marketing</span>
+      <span class="chip reveal-up">SEO</span>
+      <span class="chip reveal-up">Digital Marketing</span>
+      <span class="chip reveal-up">Marketing Automation</span>
+      <span class="chip reveal-up">E-Commerce</span>
+      <span class="chip reveal-up">Data Analytics</span>
+      <span class="chip reveal-up">AI Tools</span>
+      <span class="chip reveal-up">Facebook Ads</span>
+      <span class="chip reveal-up">Ahrefs</span>
+      <span class="chip reveal-up">Google Search Console</span>
+      <span class="chip reveal-up">Content Strategy</span>
+      <span class="chip reveal-up">Python / Gemini API</span>
+      <span class="chip reveal-up">Web Design</span>
+      <span class="chip reveal-up">SQL</span>
+    </div>
+    <div class="certs reveal-up">
+      <div class="cert"><strong>AI Consultant</strong><span>Careerprenuer Academy</span></div>
+      <div class="cert"><strong>SQL Server Database Implementation</strong><span>SEMATEC — Sep 2025</span></div>
+      <div class="cert"><strong>TCF Français B1+</strong><span>France Éducation International — May 2025</span></div>
+      <div class="cert"><strong>Facebook Ads Manager</strong><span>Coursera — Apr 2025</span></div>
+      <div class="cert"><strong>Introduction to Google SEO</strong><span>UC Davis — Apr 2025</span></div>
+      <div class="cert"><strong>Web Design Specialist</strong><span>SEMATEC — Mar 2025</span></div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <div class="contact__inner">
+      <h2 data-i18n="contact_title">Let's build proven growth.</h2>
+      <p data-i18n="contact_lead">Have a project that needs SEO, data, and AI working together? Let's talk.</p>
+      <a href="https://wa.me/989198198087" target="_blank" rel="noopener" class="btn btn--whatsapp" data-i18n="contact_wa">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Chat on WhatsApp
+      </a>
+      <div class="contact__divider"><span data-i18n="contact_or">or send a message</span></div>
+      <form class="contact__form" id="contactForm">
+        <input type="text" name="name" placeholder="Your name" data-ph="contact_name" required />
+        <input type="email" name="email" placeholder="Your email" data-ph="contact_email" required />
+        <textarea name="message" rows="4" placeholder="Tell me about your project..." data-ph="contact_msg" required></textarea>
+        <button type="submit" class="btn btn--primary" data-i18n="contact_send">Send Message</button>
+        <span class="contact__status" id="formStatus"></span>
+      </form>
+      <div class="contact__social">
+        <a href="https://wa.me/989198198087" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          WhatsApp
+        </a>
+        <a href="https://www.linkedin.com/in/farid-tashayoee/" target="_blank" rel="noopener" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          LinkedIn
+        </a>
+        <a href="https://instagram.com/farid.tashh" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          Instagram
+        </a>
+      </div>
+    </div>
+    <footer class="footer">
+      <span>Farid Tashayoee · Digital Marketing · SEO · AI Automation</span>
+      <span>Brand Guide v2.0 · 2026</span>
+    </footer>
+  </section>
+
+  <style>
+    .results__grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 1.25rem !important; max-width: 1180px !important; margin: 0 auto !important; padding: 0 1rem !important; direction: ltr !important; }
+    .rcard { background: linear-gradient(145deg, #1a4535 0%, #0e2d20 100%) !important; border: 2px solid rgba(29,158,117,.6) !important; border-radius: 18px !important; padding: 1.75rem 2rem !important; position: relative !important; overflow: hidden !important; box-shadow: 0 4px 28px rgba(0,0,0,.55) !important; transition: transform .28s, box-shadow .28s, border-color .28s !important; cursor: default !important; }
+    .rcard::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--ac1,#1D9E75) 0%, var(--ac2,#378ADD) 60%, transparent 100%); }
+    .rcard:hover { transform: translateY(-6px) !important; border-color: var(--ac1,#1D9E75) !important; }
+    .rcard--wide { grid-column: span 2 !important; }
+    .rcard__head { display: flex !important; align-items: center !important; gap: .65rem !important; margin-bottom: 1rem !important; }
+    .rcard__icon { width: 38px !important; height: 38px !important; flex-shrink: 0 !important; border-radius: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: .8rem !important; font-weight: 800 !important; color: var(--ac1,#1D9E75) !important; background: var(--ac-bg,rgba(29,158,117,.14)) !important; border: 1px solid var(--ac-border,rgba(29,158,117,.45)) !important; }
+    .rcard__tag { display: inline-block !important; font-size: .68rem !important; font-weight: 700 !important; letter-spacing: .1em !important; text-transform: uppercase !important; color: var(--ac1,#1D9E75) !important; background: var(--ac-bg,rgba(29,158,117,.14)) !important; border: 1px solid var(--ac-border,rgba(29,158,117,.45)) !important; border-radius: 999px !important; padding: .22rem .8rem !important; margin: 0 !important; }
+    .rcard__metric { font-size: 3rem !important; font-weight: 800 !important; line-height: 1 !important; margin-bottom: .65rem !important; display: block !important; background: linear-gradient(120deg,var(--ac1,#1D9E75) 0%,var(--ac2,#378ADD) 100%) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; }
+    .rcard--gold { --ac1:#E0B23A; --ac2:#F4D58D; --ac-bg:rgba(224,178,58,.14); --ac-border:rgba(224,178,58,.45); }
+    .rcard--blue { --ac1:#378ADD; --ac2:#7AC6FF; --ac-bg:rgba(55,138,221,.14); --ac-border:rgba(55,138,221,.45); }
+    .rcard--purple { --ac1:#9B6BE0; --ac2:#C9A6FF; --ac-bg:rgba(155,107,224,.14); --ac-border:rgba(155,107,224,.45); }
+    .rcard--teal { --ac1:#1D9E75; --ac2:#5FE0B8; --ac-bg:rgba(29,158,117,.14); --ac-border:rgba(29,158,117,.45); }
+    .rcard--rose { --ac1:#E0698A; --ac2:#FFA9C1; --ac-bg:rgba(224,105,138,.14); --ac-border:rgba(224,105,138,.45); }
+    .rcard--orange { --ac1:#E08A3A; --ac2:#FFC585; --ac-bg:rgba(224,138,58,.14); --ac-border:rgba(224,138,58,.45); }
+    .rcard--slate { --ac1:#7B97A8; --ac2:#C2D6E0; --ac-bg:rgba(123,151,168,.14); --ac-border:rgba(123,151,168,.45); }
+    .rcard--cyan { --ac1:#33B8C9; --ac2:#9BE8F0; --ac-bg:rgba(51,184,201,.14); --ac-border:rgba(51,184,201,.45); }
+    .rcard h3 { font-size: 1rem !important; font-weight: 600 !important; color: #E1F5EE !important; margin: 0 0 .45rem !important; }
+    .rcard p { color: rgba(225,245,238,.62) !important; font-size: .87rem !important; line-height: 1.7 !important; margin: 0 !important; }
+    @media (max-width: 768px) { .results__grid { grid-template-columns: 1fr !important; } .rcard--wide { grid-column: span 1 !important; } }
+  </style>
+`;
+
+export default function Home() {
+  return (
+    <>
+      <div dangerouslySetInnerHTML={{ __html: PAGE_HTML }} />
+      <ChatWidget />
+    </>
+  );
+}

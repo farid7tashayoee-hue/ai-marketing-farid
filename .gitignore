@@ -1,3 +1,22 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables (NEVER commit these)
+.env.local
+.env*.local
+
+# Vercel
+.vercel
+
+# Misc
+*.tsbuildinfo

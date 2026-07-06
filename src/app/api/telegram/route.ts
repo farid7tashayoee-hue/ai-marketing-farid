@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
     userId,
     messages,
     channel: "telegram",
-    streaming: false,
   });
 
   await saveMessage(sessionId, "assistant", reply);

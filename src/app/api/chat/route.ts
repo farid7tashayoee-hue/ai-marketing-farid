@@ -30,34 +30,16 @@ export async function POST(req: NextRequest) {
       { role: "user", content: message },
     ];
 
-    const result = await runAgent({
-      sessionId,
-      userId,
-      messages,
-      channel: "web",
-      streaming: true,
-    });
+    const text = await runAgent({ sessionId, userId, messages, channel: "web" });
 
-    const stream = result.toDataStreamResponse();
+    await saveMessage(sessionId, "assistant", text).catch(() => null);
 
-    // save assistant reply after streaming (fire & forget)
-    result.text.then((text: string) => {
-      if (text) saveMessage(sessionId, "assistant", text).catch(() => null);
-    });
-
-    const response = new Response(stream.body, {
-      headers: {
-        ...Object.fromEntries(stream.headers.entries()),
-        "X-Session-Id": sessionId,
-      },
-    });
-
-    return response;
+    return NextResponse.json(
+      { text, sessionId },
+      { headers: { "X-Session-Id": sessionId } }
+    );
   } catch (err) {
     console.error("[chat/route]", err);
-    return NextResponse.json(
-      { error: "خطای داخلی سرور" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "خطای داخلی سرور" }, { status: 500 });
   }
 }

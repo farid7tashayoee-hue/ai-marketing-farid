@@ -40,43 +40,18 @@ export default function ChatWindow({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ message: text, sessionId }),
       });
 
-      if (!res.ok) throw new Error("خطا در ارتباط با سرور");
+      const data = await res.json();
 
-      const newSessionId = res.headers.get("X-Session-Id");
+      if (!res.ok || data.error) throw new Error(data.error ?? "خطا در ارتباط با سرور");
+
+      const newSessionId = data.sessionId ?? res.headers.get("X-Session-Id");
       if (newSessionId && !sessionId) setSessionId(newSessionId);
 
-      const assistantId = (Date.now() + 1).toString();
-      setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          // parse Vercel AI data stream format
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (line.startsWith("0:")) {
-              try {
-                const chunk = JSON.parse(line.slice(2));
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, content: m.content + chunk } : m
-                  )
-                );
-              } catch {}
-            }
-          }
-        }
-      }
-    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), role: "assistant", content: data.text },
+      ]);
+    } catch {
       setMessages((prev) => [
         ...prev,
         { id: Date.now().toString(), role: "assistant", content: "متأسفم، مشکلی پیش اومد. دوباره تلاش کنید." },

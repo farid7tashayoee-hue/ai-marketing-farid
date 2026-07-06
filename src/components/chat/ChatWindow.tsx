@@ -67,7 +67,31 @@ export default function ChatWindow({ onClose }: { onClose: () => void }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-primary">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-sm font-bold text-white">ف</div>
+          <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center overflow-hidden" style={{background: "linear-gradient(135deg, #1D9E75, #085041)"}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Head */}
+              <rect x="6" y="5" width="12" height="9" rx="2" fill="#E1F5EE" />
+              {/* Eyes */}
+              <circle cx="9.5" cy="9" r="1.5" fill="#1D9E75" />
+              <circle cx="14.5" cy="9" r="1.5" fill="#378ADD" />
+              {/* Eye glow */}
+              <circle cx="9.5" cy="9" r="0.6" fill="white" />
+              <circle cx="14.5" cy="9" r="0.6" fill="white" />
+              {/* Antenna */}
+              <line x1="12" y1="5" x2="12" y2="2" stroke="#E1F5EE" strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="12" cy="1.5" r="1" fill="#378ADD" />
+              {/* Neck */}
+              <rect x="10.5" y="14" width="3" height="2" rx="0.5" fill="#E1F5EE" />
+              {/* Body */}
+              <rect x="5" y="16" width="14" height="7" rx="2" fill="#E1F5EE" />
+              {/* Chest panel */}
+              <rect x="8" y="18" width="3" height="2" rx="0.5" fill="#1D9E75" />
+              <rect x="13" y="18" width="3" height="2" rx="0.5" fill="#378ADD" />
+              {/* Shoulder joints */}
+              <circle cx="5" cy="17" r="1.5" fill="#1D9E75" />
+              <circle cx="19" cy="17" r="1.5" fill="#1D9E75" />
+            </svg>
+          </div>
           <div>
             <p className="text-mint-light text-sm font-bold">Fredy</p>
             <p className="text-secondary text-xs">دستیار فرید تشیعی</p>

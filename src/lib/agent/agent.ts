@@ -9,7 +9,7 @@ function getModel() {
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY,
   });
-  return openrouter("meta-llama/llama-3.3-70b-instruct:free");
+  return openrouter("google/gemma-3-27b-it:free");
 }
 
 interface AgentParams {

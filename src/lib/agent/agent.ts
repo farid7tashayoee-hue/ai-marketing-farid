@@ -9,7 +9,7 @@ function getModel() {
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY,
   });
-  return openrouter("deepseek/deepseek-chat:free");
+  return openrouter("meta-llama/llama-3.3-70b-instruct:free");
 }
 
 interface AgentParams {

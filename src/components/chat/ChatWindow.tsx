@@ -11,11 +11,17 @@ export interface Message {
 }
 
 export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => void; lang?: string }) {
+  const WELCOME: Record<string, string> = {
+    fa: "سلام! 👋 من Fredy هستم، دستیار فرید. چطور می‌تونم کمکتون کنم؟",
+    en: "Hi! 👋 I'm Fredy, Farid's assistant. How can I help you?",
+    fr: "Bonjour! 👋 Je suis Fredy, l'assistant de Farid. Comment puis-je vous aider?",
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: "سلام! 👋 من Fredy هستم، دستیار فرید. چطور می‌تونم کمکتون کنم؟",
+      content: WELCOME[lang] ?? WELCOME.fa,
     },
   ]);
   const [sessionId, setSessionId] = useState<string | null>(null);

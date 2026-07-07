@@ -32,17 +32,15 @@ export default function ChatWidget() {
   const [lang, setLang] = useState("en");
 
   useEffect(() => {
-    const getLang = () => {
-      try { return localStorage.getItem("ft_lang") || "en"; } catch { return "en"; }
-    };
-    setLang(getLang());
+    const readLang = () => document.documentElement.lang || "en";
+    setLang(readLang());
 
-    // sync if user switches language
-    const onStorage = () => setLang(getLang());
-    window.addEventListener("storage", onStorage);
+    // Watch for language changes via main.js (sets document.documentElement.lang)
+    const observer = new MutationObserver(() => setLang(readLang()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
 
     const timer = setTimeout(() => setShowNotif(true), 2500);
-    return () => { clearTimeout(timer); window.removeEventListener("storage", onStorage); };
+    return () => { clearTimeout(timer); observer.disconnect(); };
   }, []);
 
   const handleOpen = () => {

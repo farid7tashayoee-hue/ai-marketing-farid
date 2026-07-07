@@ -15,7 +15,15 @@ const PAGE_HTML = `
       <a href="#skills" data-i18n="nav_skills">Skills</a>
       <a href="#contact" class="nav__cta" data-i18n="nav_contact">Work With Me</a>
       <a href="/chat" class="nav__chat-btn">
-        <span class="nav__chat-dot"></span>
+        <span class="nav__live-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="3" fill="#1D9E75"/>
+            <path d="M6.3 6.3a8 8 0 0 0 0 11.4" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
+            <path d="M17.7 6.3a8 8 0 0 1 0 11.4" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
+            <path d="M9.2 9.2a4 4 0 0 0 0 5.6" stroke="#5FE0B8" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M14.8 9.2a4 4 0 0 1 0 5.6" stroke="#5FE0B8" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
         <span data-i18n="nav_chat">Live Chat</span>
       </a>
     </nav>

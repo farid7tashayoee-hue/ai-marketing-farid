@@ -93,7 +93,7 @@ export default function ChatWidget() {
       {/* Chat panel */}
       {open && (
         <div className="fixed bottom-24 left-6 z-50 w-80 sm:w-96">
-          <ChatWindow onClose={() => setOpen(false)} />
+          <ChatWindow onClose={() => setOpen(false)} lang={lang} />
         </div>
       )}
 

@@ -10,7 +10,7 @@ export interface Message {
   content: string;
 }
 
-export default function ChatWindow({ onClose }: { onClose: () => void }) {
+export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => void; lang?: string }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -37,7 +37,7 @@ export default function ChatWindow({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, sessionId }),
+        body: JSON.stringify({ message: text, sessionId, lang }),
       });
 
       const data = await res.json();

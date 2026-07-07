@@ -18,13 +18,14 @@ interface AgentParams {
   userId?: string;
   messages: CoreMessage[];
   channel: "web" | "telegram";
+  lang?: string;
 }
 
 export async function runAgent(params: AgentParams): Promise<string> {
-  const { sessionId, userId, messages, channel } = params;
+  const { sessionId, userId, messages, channel, lang } = params;
 
   const userMemoryBlock = userId ? await getUserMemoryBlock(userId) : "";
-  const systemPrompt = buildSystemPrompt({ userMemoryBlock, channel });
+  const systemPrompt = buildSystemPrompt({ userMemoryBlock, channel, lang });
   const tools = createTools(sessionId, userId);
   const result = await generateText({
     model: getModel(),

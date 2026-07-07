@@ -12,7 +12,7 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, sessionId: existingSessionId, userId } = await req.json();
+    const { message, sessionId: existingSessionId, userId, lang } = await req.json();
 
     if (!message?.trim()) {
       return NextResponse.json({ error: "پیام خالی است" }, { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       { role: "user", content: message },
     ];
 
-    const text = await runAgent({ sessionId, userId, messages, channel: "web" });
+    const text = await runAgent({ sessionId, userId, messages, channel: "web", lang });
 
     await saveMessage(sessionId, "assistant", text).catch(() => null);
 

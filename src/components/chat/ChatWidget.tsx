@@ -2,6 +2,12 @@
 import { useState, useEffect } from "react";
 import ChatWindow from "./ChatWindow";
 
+const NOTIF_TEXT: Record<string, string> = {
+  fa: "سلام! 👋 آنلاینم، سوالی داری؟",
+  en: "Hi! 👋 I'm online — got a question?",
+  fr: "Bonjour! 👋 Je suis en ligne, une question?",
+};
+
 const CyborgFace = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="6" y="5" width="12" height="9" rx="2" fill="#E1F5EE" />
@@ -23,10 +29,20 @@ const CyborgFace = () => (
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [lang, setLang] = useState("en");
 
   useEffect(() => {
+    const getLang = () => {
+      try { return localStorage.getItem("ft_lang") || "en"; } catch { return "en"; }
+    };
+    setLang(getLang());
+
+    // sync if user switches language
+    const onStorage = () => setLang(getLang());
+    window.addEventListener("storage", onStorage);
+
     const timer = setTimeout(() => setShowNotif(true), 2500);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); window.removeEventListener("storage", onStorage); };
   }, []);
 
   const handleOpen = () => {
@@ -51,7 +67,7 @@ export default function ChatWidget() {
           </div>
           <div className="relative bg-white text-gray-800 text-sm px-4 py-2 rounded-2xl rounded-bl-sm shadow-xl max-w-[200px] font-medium"
             style={{fontFamily: "Vazirmatn, sans-serif"}}>
-            سلام! 👋 آنلاینم، سوالی داری؟
+            {NOTIF_TEXT[lang] ?? NOTIF_TEXT.en}
             <button
               onClick={(e) => { e.stopPropagation(); setShowNotif(false); }}
               className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-200 text-gray-500 text-xs flex items-center justify-center hover:bg-gray-300"

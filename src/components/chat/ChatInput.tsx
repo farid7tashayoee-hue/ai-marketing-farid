@@ -4,9 +4,16 @@ import { useState, type KeyboardEvent } from "react";
 interface Props {
   onSend: (text: string) => void;
   disabled?: boolean;
+  lang?: string;
 }
 
-export default function ChatInput({ onSend, disabled }: Props) {
+const PLACEHOLDER: Record<string, string> = {
+  fa: "پیام بنویسید...",
+  en: "Type a message...",
+  fr: "Écrivez un message...",
+};
+
+export default function ChatInput({ onSend, disabled, lang = "fa" }: Props) {
   const [value, setValue] = useState("");
 
   const handleSend = () => {
@@ -32,7 +39,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKey}
         disabled={disabled}
-        placeholder="پیام بنویسید..."
+        placeholder={PLACEHOLDER[lang] ?? PLACEHOLDER.fa}
         className="flex-1 resize-none bg-transparent text-mint-light placeholder-mint-light/40 text-sm outline-none py-1 max-h-24"
         style={{ fontFamily: "Vazirmatn, system-ui" }}
       />

@@ -17,6 +17,12 @@ export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => vo
     fr: "Bonjour! 👋 Je suis Fredy, l'assistant de Farid. Comment puis-je vous aider?",
   };
 
+  const SUBTITLE: Record<string, string> = {
+    fa: "دستیار فرید تشیعی",
+    en: "Farid's AI Assistant",
+    fr: "Assistant de Farid",
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -106,7 +112,7 @@ export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => vo
           </div>
           <div>
             <p className="text-mint-light text-sm font-bold">Fredy</p>
-            <p className="text-secondary text-xs">دستیار فرید تشیعی</p>
+            <p className="text-secondary text-xs">{SUBTITLE[lang] ?? SUBTITLE.fa}</p>
           </div>
         </div>
         <button onClick={onClose} className="text-mint-light/60 hover:text-mint-light transition-colors">
@@ -124,7 +130,7 @@ export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => vo
       </div>
 
       {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={isLoading} />
+      <ChatInput onSend={sendMessage} disabled={isLoading} lang={lang} />
     </div>
   );
 }

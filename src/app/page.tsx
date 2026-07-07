@@ -14,6 +14,10 @@ const PAGE_HTML = `
       <a href="#experience" data-i18n="nav_experience">Experience</a>
       <a href="#skills" data-i18n="nav_skills">Skills</a>
       <a href="#contact" class="nav__cta" data-i18n="nav_contact">Work With Me</a>
+      <a href="/chat" class="nav__chat-btn">
+        <span class="nav__chat-dot"></span>
+        <span data-i18n="nav_chat">Live Chat</span>
+      </a>
     </nav>
     <div class="lang-switch" role="group" aria-label="Language switch">
       <button class="lang-btn is-active" data-lang="en">EN</button>

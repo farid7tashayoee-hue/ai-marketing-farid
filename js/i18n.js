@@ -6,7 +6,7 @@ const I18N = {
   en: {
     dir: "ltr",
     nav_about: "What I Do", nav_results: "Results", nav_experience: "Experience",
-    nav_skills: "Skills", nav_contact: "Work With Me",
+    nav_skills: "Skills", nav_contact: "Work With Me", nav_chat: "Live Chat",
     hero_kicker: "PERSONAL BRAND · V2.0",
     hero_role_pre: "I'm an",
     hero_tagline: "Where Data Meets Proven Growth.",
@@ -54,7 +54,7 @@ const I18N = {
   fa: {
     dir: "rtl",
     nav_about: "چه می‌کنم", nav_results: "نتایج", nav_experience: "تجربه",
-    nav_skills: "مهارت‌ها", nav_contact: "با من کار کن",
+    nav_skills: "مهارت‌ها", nav_contact: "با من کار کن", nav_chat: "چت آنلاین",
     hero_kicker: "برند شخصی · نسخه ۲٫۰",
     hero_role_pre: "من یک",
     hero_tagline: "«داده رو می‌فهمم، نتیجه رو اثبات می‌کنم.»",
@@ -102,7 +102,7 @@ const I18N = {
   fr: {
     dir: "ltr",
     nav_about: "Ce que je fais", nav_results: "Résultats", nav_experience: "Expérience",
-    nav_skills: "Compétences", nav_contact: "Travaillons ensemble",
+    nav_skills: "Compétences", nav_contact: "Travaillons ensemble", nav_chat: "Chat en direct",
     hero_kicker: "MARQUE PERSONNELLE · V2.0",
     hero_role_pre: "Je suis",
     hero_tagline: "Là où la donnée rencontre la croissance prouvée.",

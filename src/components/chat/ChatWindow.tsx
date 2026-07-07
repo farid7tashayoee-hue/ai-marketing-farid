@@ -29,6 +29,12 @@ export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => vo
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMessages(prev =>
+      prev.map(m => m.id === "welcome" ? { ...m, content: WELCOME[lang] ?? WELCOME.fa } : m)
+    );
+  }, [lang]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 

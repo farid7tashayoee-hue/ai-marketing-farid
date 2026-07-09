@@ -8,8 +8,17 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function saveContact(name, email, message) {
-  const { error } = await db.from('contacts').insert([{ name, email, message }]);
-  return error;
+  try {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, message })
+    });
+    const data = await res.json();
+    return data.ok ? null : new Error('server error');
+  } catch (e) {
+    return e;
+  }
 }
 
 async function saveLead(email) {

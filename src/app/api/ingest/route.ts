@@ -505,14 +505,22 @@ function chunk(text: string): string[] {
 }
 
 async function embed(texts: string[], apiKey: string): Promise<number[][]> {
-  const res = await fetch("https://api.voyageai.com/v1/embeddings", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ input: texts, model: "voyage-3-large" }),
-  });
-  if (!res.ok) throw new Error(`Voyage: ${res.status} ${await res.text()}`);
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requests: texts.map((text) => ({
+          model: "models/text-embedding-004",
+          content: { parts: [{ text }] },
+        })),
+      }),
+    }
+  );
+  if (!res.ok) throw new Error(`Gemini embed: ${res.status} ${await res.text()}`);
   const j = await res.json();
-  return j.data.map((d: { embedding: number[] }) => d.embedding);
+  return j.embeddings.map((e: { values: number[] }) => e.values);
 }
 
 export async function POST(req: NextRequest) {
@@ -521,9 +529,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const voyageKey = process.env.VOYAGE_API_KEY;
+  const voyageKey = process.env.GOOGLE_AI_API_KEY;
   if (!voyageKey) {
-    return NextResponse.json({ error: "VOYAGE_API_KEY not set" }, { status: 500 });
+    return NextResponse.json({ error: "GOOGLE_AI_API_KEY not set" }, { status: 500 });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

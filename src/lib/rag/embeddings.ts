@@ -1,32 +1,37 @@
-const VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings";
+const GEMINI_EMBED_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent";
+
+const GEMINI_BATCH_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents";
 
 export async function embedText(text: string): Promise<number[]> {
-  const res = await fetch(VOYAGE_API_URL, {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const res = await fetch(`${GEMINI_EMBED_URL}?key=${apiKey}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      input: [text],
-      model: "voyage-3-large",
+      model: "models/text-embedding-004",
+      content: { parts: [{ text }] },
     }),
   });
-  if (!res.ok) throw new Error(`Voyage API error: ${res.status}`);
+  if (!res.ok) throw new Error(`Gemini embed error: ${res.status} ${await res.text()}`);
   const json = await res.json();
-  return json.data[0].embedding as number[];
+  return json.embedding.values as number[];
 }
 
 export async function embedBatch(texts: string[]): Promise<number[][]> {
-  const res = await fetch(VOYAGE_API_URL, {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const res = await fetch(`${GEMINI_BATCH_URL}?key=${apiKey}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
-    },
-    body: JSON.stringify({ input: texts, model: "voyage-3-large" }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requests: texts.map((text) => ({
+        model: "models/text-embedding-004",
+        content: { parts: [{ text }] },
+      })),
+    }),
   });
-  if (!res.ok) throw new Error(`Voyage API error: ${res.status}`);
+  if (!res.ok) throw new Error(`Gemini batch embed error: ${res.status} ${await res.text()}`);
   const json = await res.json();
-  return json.data.map((d: { embedding: number[] }) => d.embedding);
+  return json.embeddings.map((e: { values: number[] }) => e.values);
 }

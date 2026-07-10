@@ -506,7 +506,7 @@ function chunk(text: string): string[] {
 
 async function embed(texts: string[], apiKey: string): Promise<number[][]> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1/models/text-embedding-004:batchEmbedContents?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

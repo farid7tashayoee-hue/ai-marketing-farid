@@ -11,11 +11,27 @@ interface Contact { id: string; name: string; email: string; message: string; cr
 interface Lead { id: string; name?: string; email?: string; phone?: string; notes?: string; source?: string; created_at: string; }
 interface Message { role: string; content: string; created_at: string; }
 interface KnowledgeDoc { id: string; source: string; category: string; content: string; created_at: string; }
+interface KnowledgeGroup { source: string; category: string; content: string; chunkCount: number; }
 
 const CAT_LABEL: Record<string, string> = {
   about: "درباره", contact: "تماس", services: "خدمات", experience: "سابقه کاری",
   education: "تحصیلات", projects: "پروژه‌ها", faq: "سوالات متداول", results: "نتایج", knowledge: "دانش عمومی",
 };
+const SOURCE_FILES_IN_CODE = 2; // system-prompt.ts + ingest/route.ts
+
+function groupBySource(docs: KnowledgeDoc[]): KnowledgeGroup[] {
+  const bySource = new Map<string, KnowledgeDoc[]>();
+  for (const d of docs) {
+    if (!bySource.has(d.source)) bySource.set(d.source, []);
+    bySource.get(d.source)!.push(d);
+  }
+  return Array.from(bySource.entries()).map(([source, chunks]) => ({
+    source,
+    category: chunks[0].category,
+    content: chunks.map(c => c.content).join("\n\n"),
+    chunkCount: chunks.length,
+  }));
+}
 
 function inlineNodes(text: string, keyPrefix: string) {
   const parts = text.split(/\*\*(.+?)\*\*/g);
@@ -78,6 +94,13 @@ export default function Dashboard() {
   const [systemPrompt, setSystemPrompt] = useState("");
   const [activeCat, setActiveCat] = useState<string>("all");
   const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formSource, setFormSource] = useState("");
+  const [formCategory, setFormCategory] = useState("");
+  const [formContent, setFormContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [deletingSource, setDeletingSource] = useState<string | null>(null);
 
   const token = typeof window !== "undefined" ? sessionStorage.getItem("db_token") : "";
 
@@ -119,6 +142,40 @@ export default function Dashboard() {
     setMessages(data ?? []);
   };
 
+  const saveKnowledgeDoc = async () => {
+    if (!formSource.trim() || !formCategory.trim() || !formContent.trim()) {
+      setSaveError("همه فیلدها الزامی است");
+      return;
+    }
+    setSaving(true);
+    setSaveError("");
+    const t = sessionStorage.getItem("db_token");
+    const res = await fetch("/api/dashboard", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify({ source: formSource, category: formCategory, content: formContent }),
+    });
+    const json = await res.json();
+    setSaving(false);
+    if (!res.ok) { setSaveError(json.error ?? "خطا در ذخیره‌سازی"); return; }
+    setShowAddForm(false);
+    setFormSource(""); setFormCategory(""); setFormContent("");
+    load("knowledge");
+  };
+
+  const deleteKnowledgeDoc = async (source: string) => {
+    if (!confirm(`سند «${source}» حذف شود؟`)) return;
+    setDeletingSource(source);
+    const t = sessionStorage.getItem("db_token");
+    await fetch("/api/dashboard", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify({ source }),
+    });
+    setDeletingSource(null);
+    load("knowledge");
+  };
+
   if (!authed) return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Vazirmatn, system-ui" }}>
       <div style={{ width: 360, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: "2.5rem 2rem" }}>
@@ -152,7 +209,8 @@ export default function Dashboard() {
   ];
 
   const categories = Array.from(new Set(knowledgeDocs.map(d => d.category)));
-  const visibleDocs = activeCat === "all" ? knowledgeDocs : knowledgeDocs.filter(d => d.category === activeCat);
+  const knowledgeGroups = groupBySource(knowledgeDocs);
+  const visibleGroups = activeCat === "all" ? knowledgeGroups : knowledgeGroups.filter(d => d.category === activeCat);
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "Vazirmatn, system-ui", direction: "rtl" }}>
@@ -305,32 +363,95 @@ export default function Dashboard() {
             </div>
 
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <span style={{ color: C.mint, fontWeight: 700, fontSize: 14 }}>📚 کتابخانهٔ کامل RAG</span>
-                <span style={{ color: C.dim, fontSize: 11, fontFamily: "monospace", direction: "ltr" }}>documents (Supabase)</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: C.mint, fontWeight: 700, fontSize: 14 }}>📚 کتابخانهٔ کامل RAG</span>
+                  <span style={{ color: C.dim, fontSize: 11, fontFamily: "monospace", direction: "ltr" }}>documents (Supabase)</span>
+                </div>
+                <button onClick={() => { setShowAddForm(v => !v); setSaveError(""); }} style={{
+                  background: showAddForm ? "transparent" : C.teal, color: showAddForm ? C.dim : "#042019",
+                  border: `1px solid ${showAddForm ? C.border : C.teal}`, borderRadius: 10, padding: "7px 16px",
+                  fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                }}>{showAddForm ? "بستن ✕" : "+ افزودن سند جدید"}</button>
               </div>
+
+              {/* mini stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 16 }}>
+                {[
+                  { label: "سند منبع (RAG)", value: knowledgeGroups.length },
+                  { label: "Chunk ایندکس‌شده در Supabase", value: knowledgeDocs.length },
+                  { label: "دسته‌بندی", value: categories.length },
+                  { label: "فایل منبع در کد", value: SOURCE_FILES_IN_CODE },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "rgba(29,158,117,0.06)", border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 12px" }}>
+                    <div style={{ color: C.teal, fontSize: 20, fontWeight: 800 }}>{s.value}</div>
+                    <div style={{ color: C.dim, fontSize: 11, marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {showAddForm && (
+                <div style={{ background: C.surface, border: `1px solid ${C.teal}`, borderRadius: 14, padding: "1.1rem 1.35rem", marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <input
+                    placeholder="عنوان سند (مثلاً: خدمات طراحی وب)" value={formSource}
+                    onChange={e => setFormSource(e.target.value)}
+                    style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                  />
+                  <input
+                    placeholder="دسته‌بندی (مثلاً: services)" value={formCategory}
+                    onChange={e => setFormCategory(e.target.value)}
+                    list="cat-suggestions"
+                    style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                  />
+                  <datalist id="cat-suggestions">
+                    {categories.map(cat => <option key={cat} value={cat} />)}
+                  </datalist>
+                  <textarea
+                    placeholder="متن کامل سند (می‌تونی از # و ## برای تیتر و - برای لیست استفاده کنی)" value={formContent}
+                    onChange={e => setFormContent(e.target.value)}
+                    rows={8}
+                    style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical" }}
+                  />
+                  {saveError && <div style={{ color: "#e05555", fontSize: 12 }}>{saveError}</div>}
+                  <button onClick={saveKnowledgeDoc} disabled={saving} style={{
+                    background: C.teal, color: "#042019", border: "none", borderRadius: 8, padding: "10px",
+                    fontWeight: 700, fontSize: 13, cursor: saving ? "default" : "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1,
+                  }}>{saving ? "در حال ایندکس‌کردن..." : "ذخیره و ایندکس در RAG"}</button>
+                </div>
+              )}
+
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
                 <button onClick={() => setActiveCat("all")} style={{
                   background: activeCat === "all" ? C.teal : "transparent", color: activeCat === "all" ? "#042019" : C.dim,
                   border: `1px solid ${activeCat === "all" ? C.teal : C.border}`, borderRadius: 999, padding: "5px 14px",
                   fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                }}>همه ({knowledgeDocs.length})</button>
+                }}>همه ({knowledgeGroups.length})</button>
                 {categories.map(cat => (
                   <button key={cat} onClick={() => setActiveCat(cat)} style={{
                     background: activeCat === cat ? C.teal : "transparent", color: activeCat === cat ? "#042019" : C.dim,
                     border: `1px solid ${activeCat === cat ? C.teal : C.border}`, borderRadius: 999, padding: "5px 14px",
                     fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                  }}>{CAT_LABEL[cat] ?? cat} ({knowledgeDocs.filter(d => d.category === cat).length})</button>
+                  }}>{CAT_LABEL[cat] ?? cat} ({knowledgeGroups.filter(d => d.category === cat).length})</button>
                 ))}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {knowledgeDocs.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "3rem" }}>سندی یافت نشد</div>}
-                {visibleDocs.map(doc => (
-                  <div key={doc.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.1rem 1.35rem" }}>
+                {knowledgeGroups.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "3rem" }}>سندی یافت نشد</div>}
+                {visibleGroups.map(doc => (
+                  <div key={doc.source} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.1rem 1.35rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
                       <span style={{ color: C.mint, fontWeight: 700, fontSize: 13.5 }}>{doc.source}</span>
-                      <span style={{ background: "rgba(29,158,117,0.12)", color: C.teal, borderRadius: 999, padding: "2px 10px", fontSize: 10.5, fontFamily: "monospace" }}>{doc.category}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                        <span style={{ background: "rgba(29,158,117,0.12)", color: C.teal, borderRadius: 999, padding: "2px 10px", fontSize: 10.5, fontFamily: "monospace" }}>{doc.category}</span>
+                        <span style={{ color: C.dim, fontSize: 10.5 }}>{doc.chunkCount} chunk</span>
+                        <button
+                          onClick={() => deleteKnowledgeDoc(doc.source)}
+                          disabled={deletingSource === doc.source}
+                          style={{ background: "none", border: "1px solid rgba(224,85,85,0.4)", borderRadius: 8, color: "#e05555", padding: "3px 10px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}
+                        >
+                          {deletingSource === doc.source ? "..." : "حذف"}
+                        </button>
+                      </div>
                     </div>
                     {renderMd(doc.content, C)}
                   </div>

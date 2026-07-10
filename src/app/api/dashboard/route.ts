@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { FARID_KNOWLEDGE } from "@/lib/agent/system-prompt";
+import { indexDocument } from "@/lib/rag/indexer";
 
 function getAdmin() {
   return createClient(
@@ -106,4 +107,36 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ error: "Unknown type" }, { status: 400 });
+}
+
+export async function PUT(req: NextRequest) {
+  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { source, category, content } = await req.json();
+  if (!source?.trim() || !category?.trim() || !content?.trim()) {
+    return NextResponse.json({ error: "source, category, content الزامی است" }, { status: 400 });
+  }
+
+  const db = getAdmin();
+  // upsert by source: drop any existing chunks for this source before re-indexing
+  await db.from("documents").delete().eq("source", source.trim());
+
+  try {
+    const chunks = await indexDocument({ content: content.trim(), source: source.trim(), category: category.trim() });
+    return NextResponse.json({ ok: true, chunks });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { source } = await req.json();
+  if (!source?.trim()) return NextResponse.json({ error: "source الزامی است" }, { status: 400 });
+
+  const db = getAdmin();
+  const { error } = await db.from("documents").delete().eq("source", source.trim());
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

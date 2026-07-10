@@ -1,4 +1,5 @@
-const BASE = "https://generativelanguage.googleapis.com/v1beta/models/embedding-001";
+const BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001";
+const OUTPUT_DIM = 768;
 
 export async function embedText(text: string): Promise<number[]> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
@@ -6,8 +7,9 @@ export async function embedText(text: string): Promise<number[]> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "models/embedding-001",
+      model: "models/gemini-embedding-001",
       content: { parts: [{ text }] },
+      outputDimensionality: OUTPUT_DIM,
     }),
   });
   if (!res.ok) throw new Error(`Gemini embed: ${res.status} ${await res.text()}`);
@@ -22,8 +24,9 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       requests: texts.map((text) => ({
-        model: "models/embedding-001",
+        model: "models/gemini-embedding-001",
         content: { parts: [{ text }] },
+        outputDimensionality: OUTPUT_DIM,
       })),
     }),
   });

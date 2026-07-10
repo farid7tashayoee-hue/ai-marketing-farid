@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { FARID_KNOWLEDGE } from "@/lib/agent/system-prompt";
 
 function getAdmin() {
   return createClient(
@@ -82,6 +83,15 @@ export async function GET(req: NextRequest) {
       message_count: countBySession[s.id] ?? 0,
     }));
     return NextResponse.json({ data: result });
+  }
+
+  if (type === "knowledge") {
+    const { data } = await db
+      .from("documents")
+      .select("id, source, category, content, created_at")
+      .order("category", { ascending: true })
+      .order("source", { ascending: true });
+    return NextResponse.json({ data: data ?? [], systemPrompt: FARID_KNOWLEDGE });
   }
 
   if (type === "messages") {

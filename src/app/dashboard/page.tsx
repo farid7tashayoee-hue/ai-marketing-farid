@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 
-type Tab = "conversations" | "contacts" | "leads";
+type Tab = "conversations" | "contacts" | "leads" | "knowledge";
 
 interface Session {
   id: string; channel: string; created_at: string; last_activity: string;
@@ -10,6 +10,53 @@ interface Session {
 interface Contact { id: string; name: string; email: string; message: string; created_at: string; }
 interface Lead { id: string; name?: string; email?: string; phone?: string; notes?: string; source?: string; created_at: string; }
 interface Message { role: string; content: string; created_at: string; }
+interface KnowledgeDoc { id: string; source: string; category: string; content: string; created_at: string; }
+
+const CAT_LABEL: Record<string, string> = {
+  about: "درباره", contact: "تماس", services: "خدمات", experience: "سابقه کاری",
+  education: "تحصیلات", projects: "پروژه‌ها", faq: "سوالات متداول", results: "نتایج", knowledge: "دانش عمومی",
+};
+
+function inlineNodes(text: string, keyPrefix: string) {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={`${keyPrefix}-${i}`}>{part}</strong> : <span key={`${keyPrefix}-${i}`}>{part}</span>
+  );
+}
+
+function renderMd(md: string, C: Record<string, string>) {
+  const lines = md.split("\n");
+  const nodes: ReactNode[] = [];
+  let list: string[] = [];
+  const flushList = (key: string) => {
+    if (list.length) {
+      nodes.push(
+        <ul key={key} style={{ margin: "0 0 8px", paddingInlineStart: 20, color: C.dim, fontSize: 13, lineHeight: 1.8 }}>
+          {list.map((item, i) => <li key={i}>{inlineNodes(item, `${key}-li-${i}`)}</li>)}
+        </ul>
+      );
+      list = [];
+    }
+  };
+  lines.forEach((raw, idx) => {
+    const line = raw.trim();
+    const key = `l-${idx}`;
+    if (/^-\s+/.test(line)) { list.push(line.replace(/^-\s+/, "")); return; }
+    flushList(key + "-flush");
+    if (line === "") return;
+    if (/^###\s+/.test(line)) {
+      nodes.push(<div key={key} style={{ color: C.blue, fontWeight: 700, fontSize: 12.5, margin: "8px 0 3px" }}>{inlineNodes(line.replace(/^###\s+/, ""), key)}</div>);
+    } else if (/^##\s+/.test(line)) {
+      nodes.push(<div key={key} style={{ color: C.teal, fontWeight: 800, fontSize: 13.5, margin: "10px 0 4px" }}>{inlineNodes(line.replace(/^##\s+/, ""), key)}</div>);
+    } else if (/^#\s+/.test(line)) {
+      nodes.push(<div key={key} style={{ color: C.mint, fontWeight: 800, fontSize: 15, margin: "0 0 6px" }}>{inlineNodes(line.replace(/^#\s+/, ""), key)}</div>);
+    } else {
+      nodes.push(<p key={key} style={{ margin: "0 0 6px", color: C.dim, fontSize: 13, lineHeight: 1.8 }}>{inlineNodes(line, key)}</p>);
+    }
+  });
+  flushList("end-flush");
+  return nodes;
+}
 
 const C = { bg: "#051f1a", surface: "#0a2e26", border: "rgba(29,158,117,0.2)", teal: "#1D9E75", mint: "#E1F5EE", dim: "rgba(225,245,238,0.55)", blue: "#378ADD" };
 
@@ -27,6 +74,9 @@ export default function Dashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [openSession, setOpenSession] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>([]);
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [activeCat, setActiveCat] = useState<string>("all");
   const [loading, setLoading] = useState(false);
 
   const token = typeof window !== "undefined" ? sessionStorage.getItem("db_token") : "";
@@ -39,10 +89,12 @@ export default function Dashboard() {
 
   const load = useCallback(async (t: Tab) => {
     setLoading(true);
-    const { data } = await apiFetch(`/api/dashboard?type=${t}`);
+    const res = await apiFetch(`/api/dashboard?type=${t}`);
+    const data = res.data;
     if (t === "conversations") setSessions(data ?? []);
     if (t === "contacts") setContacts(data ?? []);
     if (t === "leads") setLeads(data ?? []);
+    if (t === "knowledge") { setKnowledgeDocs(data ?? []); setSystemPrompt(res.systemPrompt ?? ""); }
     setLoading(false);
   }, [apiFetch]);
 
@@ -96,7 +148,11 @@ export default function Dashboard() {
     { id: "conversations", label: "مکالمات", icon: "💬", count: sessions.length },
     { id: "contacts", label: "پیام‌های تماس", icon: "📩", count: contacts.length },
     { id: "leads", label: "لیدها", icon: "🎯", count: leads.length },
+    { id: "knowledge", label: "دانش‌پایه", icon: "📚", count: knowledgeDocs.length },
   ];
+
+  const categories = Array.from(new Set(knowledgeDocs.map(d => d.category)));
+  const visibleDocs = activeCat === "all" ? knowledgeDocs : knowledgeDocs.filter(d => d.category === activeCat);
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "Vazirmatn, system-ui", direction: "rtl" }}>
@@ -119,11 +175,12 @@ export default function Dashboard() {
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem" }}>
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: "2rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: "2rem" }}>
           {[
             { label: "کل مکالمات", value: sessions.length, color: C.teal, icon: "💬" },
             { label: "پیام‌های تماس", value: contacts.length, color: C.blue, icon: "📩" },
             { label: "لیدها", value: leads.length, color: "#9B6BE0", icon: "🎯" },
+            { label: "اسناد دانش‌پایه", value: knowledgeDocs.length, color: C.teal, icon: "📚" },
           ].map(s => (
             <div key={s.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: 14 }}>
               <span style={{ fontSize: 28 }}>{s.icon}</span>
@@ -230,6 +287,56 @@ export default function Dashboard() {
                 <span style={{ color: C.dim, fontSize: 12, flexShrink: 0 }}>{fmt(l.created_at)}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Knowledge base */}
+        {!loading && tab === "knowledge" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>🧠</span>
+                <span style={{ color: C.mint, fontWeight: 700, fontSize: 14 }}>خلاصهٔ System Prompt</span>
+                <span style={{ color: C.dim, fontSize: 11, fontFamily: "monospace", direction: "ltr" }}>system-prompt.ts</span>
+              </div>
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10, maxHeight: 260, overflowY: "auto" }}>
+                {systemPrompt ? renderMd(systemPrompt, C) : <div style={{ color: C.dim, fontSize: 13 }}>در حال بارگذاری...</div>}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <span style={{ color: C.mint, fontWeight: 700, fontSize: 14 }}>📚 کتابخانهٔ کامل RAG</span>
+                <span style={{ color: C.dim, fontSize: 11, fontFamily: "monospace", direction: "ltr" }}>documents (Supabase)</span>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                <button onClick={() => setActiveCat("all")} style={{
+                  background: activeCat === "all" ? C.teal : "transparent", color: activeCat === "all" ? "#042019" : C.dim,
+                  border: `1px solid ${activeCat === "all" ? C.teal : C.border}`, borderRadius: 999, padding: "5px 14px",
+                  fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                }}>همه ({knowledgeDocs.length})</button>
+                {categories.map(cat => (
+                  <button key={cat} onClick={() => setActiveCat(cat)} style={{
+                    background: activeCat === cat ? C.teal : "transparent", color: activeCat === cat ? "#042019" : C.dim,
+                    border: `1px solid ${activeCat === cat ? C.teal : C.border}`, borderRadius: 999, padding: "5px 14px",
+                    fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                  }}>{CAT_LABEL[cat] ?? cat} ({knowledgeDocs.filter(d => d.category === cat).length})</button>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {knowledgeDocs.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "3rem" }}>سندی یافت نشد</div>}
+                {visibleDocs.map(doc => (
+                  <div key={doc.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.1rem 1.35rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
+                      <span style={{ color: C.mint, fontWeight: 700, fontSize: 13.5 }}>{doc.source}</span>
+                      <span style={{ background: "rgba(29,158,117,0.12)", color: C.teal, borderRadius: 999, padding: "2px 10px", fontSize: 10.5, fontFamily: "monospace" }}>{doc.category}</span>
+                    </div>
+                    {renderMd(doc.content, C)}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -39,6 +39,41 @@ const ERROR_MSG: Record<string, string> = {
   fr: "Désolé, une erreur est survenue. Veuillez réessayer.",
 };
 
+function isServerMessageId(id: string) {
+  return id !== "welcome" && id.includes("-");
+}
+
+function FeedbackButtons({ messageId }: { messageId: string }) {
+  const [rating, setRating] = useState<"up" | "down" | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const send = async (r: "up" | "down") => {
+    if (rating || sending) return;
+    setSending(true);
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId, rating: r }),
+      });
+      setRating(r);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+      <button onClick={() => send("up")} disabled={!!rating || sending}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, opacity: rating === "up" ? 1 : 0.55 }}
+        aria-label="پاسخ مفید بود">👍</button>
+      <button onClick={() => send("down")} disabled={!!rating || sending}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, opacity: rating === "down" ? 1 : 0.55 }}
+        aria-label="پاسخ مفید نبود">👎</button>
+    </div>
+  );
+}
+
 const CyborgIcon = ({ size = 22 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <rect x="6" y="5" width="12" height="9" rx="2" fill="#E1F5EE" />
@@ -92,7 +127,7 @@ export default function ChatPage() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error);
       if (data.sessionId && !sessionId) setSessionId(data.sessionId);
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: data.text }]);
+      setMessages(prev => [...prev, { id: data.messageId ?? (Date.now() + 1).toString(), role: "assistant", content: data.text }]);
     } catch {
       setMessages(prev => [...prev, { id: Date.now().toString(), role: "assistant", content: ERROR_MSG[lang] ?? ERROR_MSG.fa }]);
     } finally {
@@ -142,20 +177,24 @@ export default function ChatPage() {
                   <CyborgIcon size={18} />
                 </div>
               )}
-              <div dir="auto" style={{
-                maxWidth: "70%",
-                padding: "12px 16px",
-                borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                background: msg.role === "user" ? "rgba(8,80,65,0.8)" : "rgba(29,158,117,0.12)",
-                border: msg.role === "user" ? "1px solid rgba(8,80,65,0.5)" : "1px solid rgba(29,158,117,0.25)",
-                color: "#E1F5EE",
-                fontSize: 14,
-                lineHeight: 1.7,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontFamily: "Vazirmatn, system-ui",
-              }}>
-                {msg.content}
+              <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                <div dir="auto" style={{
+                  padding: "12px 16px",
+                  borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                  background: msg.role === "user" ? "rgba(8,80,65,0.8)" : "rgba(29,158,117,0.12)",
+                  border: msg.role === "user" ? "1px solid rgba(8,80,65,0.5)" : "1px solid rgba(29,158,117,0.25)",
+                  color: "#E1F5EE",
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontFamily: "Vazirmatn, system-ui",
+                }}>
+                  {msg.content}
+                </div>
+                {msg.role === "assistant" && msg.content && isServerMessageId(msg.id) && (
+                  <FeedbackButtons messageId={msg.id} />
+                )}
               </div>
             </div>
           ))}

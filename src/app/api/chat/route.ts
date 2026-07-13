@@ -30,12 +30,17 @@ export async function POST(req: NextRequest) {
       { role: "user", content: message },
     ];
 
-    const text = await runAgent({ sessionId, userId, messages, channel: "web", lang });
+    const result = await runAgent({ sessionId, userId, messages, channel: "web", lang });
 
-    await saveMessage(sessionId, "assistant", text).catch(() => null);
+    const messageId = await saveMessage(sessionId, "assistant", result.text, {
+      model: result.model,
+      inputTokens: result.usage.promptTokens,
+      outputTokens: result.usage.completionTokens,
+      ragSources: result.ragSources,
+    }).catch(() => undefined);
 
     return NextResponse.json(
-      { text, sessionId },
+      { text: result.text, sessionId, messageId },
       { headers: { "X-Session-Id": sessionId } }
     );
   } catch (err) {

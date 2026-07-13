@@ -1,9 +1,14 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createServerClient } from "@/lib/supabase/server";
-import { retrieveContext } from "@/lib/rag/retriever";
+import { retrieveChunks } from "@/lib/rag/retriever";
 
-export function createTools(sessionId: string, userId?: string) {
+export interface RagSourceUsed {
+  source: string;
+  similarity: number;
+}
+
+export function createTools(sessionId: string, userId?: string, ragSourcesSink: RagSourceUsed[] = []) {
   const supabase = createServerClient();
 
   const capture_lead = tool({
@@ -78,8 +83,21 @@ export function createTools(sessionId: string, userId?: string) {
     }),
     execute: async ({ query, category }) => {
       try {
-        const context = await retrieveContext({ query, category, topK: 5 });
-        return context || "اطلاعات مرتبطی در دانش‌پایه یافت نشد.";
+        const chunks = await retrieveChunks({ query, category, topK: 5 });
+        if (!chunks.length) {
+          try {
+            await supabase.from("unanswered_questions").insert({ session_id: sessionId, question: query });
+          } catch {
+            // جدول ممکن است هنوز migrate نشده باشد؛ سکوت در صورت خطا
+          }
+          return "اطلاعات مرتبطی در دانش‌پایه یافت نشد.";
+        }
+        for (const c of chunks) {
+          ragSourcesSink.push({ source: c.source ?? "دانش‌پایه", similarity: c.similarity });
+        }
+        return chunks
+          .map((d) => `[منبع: ${d.source ?? "دانش‌پایه"} | شباهت: ${Math.round(d.similarity * 100)}%]\n${d.content}`)
+          .join("\n\n---\n\n");
       } catch {
         return "جستجو در دانش‌پایه با خطا مواجه شد.";
       }

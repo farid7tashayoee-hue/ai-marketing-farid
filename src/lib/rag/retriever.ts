@@ -7,11 +7,19 @@ interface RetrieveParams {
   topK?: number;
 }
 
-export async function retrieveContext({
+export interface RetrievedChunk {
+  id: string;
+  content: string;
+  source: string;
+  category: string;
+  similarity: number;
+}
+
+export async function retrieveChunks({
   query,
   category,
   topK = 5,
-}: RetrieveParams): Promise<string> {
+}: RetrieveParams): Promise<RetrievedChunk[]> {
   const supabase = createServerClient();
   const embedding = await embedText(query);
 
@@ -22,9 +30,14 @@ export async function retrieveContext({
   });
 
   if (error) throw new Error(`retriever: ${error.message}`);
-  if (!data?.length) return "";
+  return (data ?? []) as RetrievedChunk[];
+}
 
-  return (data as { content: string; source: string; similarity: number }[])
+export async function retrieveContext(params: RetrieveParams): Promise<string> {
+  const chunks = await retrieveChunks(params);
+  if (!chunks.length) return "";
+
+  return chunks
     .map((d) => `[منبع: ${d.source ?? "دانش‌پایه"} | شباهت: ${Math.round(d.similarity * 100)}%]\n${d.content}`)
     .join("\n\n---\n\n");
 }

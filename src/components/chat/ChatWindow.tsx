@@ -67,7 +67,7 @@ export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => vo
 
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: "assistant", content: data.text },
+        { id: data.messageId ?? (Date.now() + 1).toString(), role: "assistant", content: data.text },
       ]);
     } catch {
       setMessages((prev) => [

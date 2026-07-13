@@ -1,22 +1,37 @@
 "use client";
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 
-type Tab = "conversations" | "contacts" | "leads" | "knowledge";
+type Tab = "conversations" | "contacts" | "leads" | "knowledge" | "telegram";
+type AddMode = "text" | "file" | "url";
 
 interface Session {
   id: string; channel: string; created_at: string; last_activity: string;
   last_message: string; message_count: number;
 }
 interface Contact { id: string; name: string; email: string; message: string; created_at: string; }
-interface Lead { id: string; name?: string; email?: string; phone?: string; notes?: string; source?: string; created_at: string; }
+interface Lead { id: string; name?: string; email?: string; phone?: string; notes?: string; source?: string; status?: string; created_at: string; }
 interface Message { role: string; content: string; created_at: string; }
-interface KnowledgeDoc { id: string; source: string; category: string; content: string; created_at: string; }
-interface KnowledgeGroup { source: string; category: string; content: string; chunkCount: number; }
+interface DocMetadata { sourceType?: string; tags?: string[]; }
+interface KnowledgeDoc { id: string; source: string; category: string; content: string; metadata?: DocMetadata; created_at: string; }
+interface KnowledgeGroup { source: string; category: string; content: string; chunkCount: number; metadata?: DocMetadata; }
+interface TestChunk { id: string; source: string; category: string; content: string; similarity: number; }
+interface ModelStat { model: string; count: number; inputTokens: number; outputTokens: number; cost: number; }
+interface Stats {
+  sessionCount: number; leadCount: number; unansweredCount: number; uniqueUsers: number;
+  channelCounts: Record<string, number>; satisfactionRate: number | null;
+  feedbackUp: number; feedbackDown: number; conversionRate: number;
+  modelStats: ModelStat[]; totalCost: number;
+}
+interface TelegramStatus {
+  webhook: { url?: string; pending_update_count?: number } | null;
+  userCount: number;
+}
 
 const CAT_LABEL: Record<string, string> = {
   about: "درباره", contact: "تماس", services: "خدمات", experience: "سابقه کاری",
   education: "تحصیلات", projects: "پروژه‌ها", faq: "سوالات متداول", results: "نتایج", knowledge: "دانش عمومی",
 };
+const LEAD_STATUSES = ["جدید", "تماس گرفته شد", "جلسه تنظیم شد", "موفق", "منصرف"];
 const SOURCE_FILES_IN_CODE = 2; // system-prompt.ts + ingest/route.ts
 
 function groupBySource(docs: KnowledgeDoc[]): KnowledgeGroup[] {
@@ -30,7 +45,23 @@ function groupBySource(docs: KnowledgeDoc[]): KnowledgeGroup[] {
     category: chunks[0].category,
     content: chunks.map(c => c.content).join("\n\n"),
     chunkCount: chunks.length,
+    metadata: chunks[0].metadata,
   }));
+}
+
+function csvEscape(v: string) {
+  if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
+  return v;
+}
+
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = rows.map(r => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function inlineNodes(text: string, keyPrefix: string) {
@@ -101,6 +132,25 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [deletingSource, setDeletingSource] = useState<string | null>(null);
+  const [addMode, setAddMode] = useState<AddMode>("text");
+  const [formUrl, setFormUrl] = useState("");
+  const [formTags, setFormTags] = useState("");
+  const [rebuildingSource, setRebuildingSource] = useState<string | null>(null);
+  const [testQuery, setTestQuery] = useState("");
+  const [testResults, setTestResults] = useState<TestChunk[] | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testError, setTestError] = useState("");
+
+  const [leadSearch, setLeadSearch] = useState("");
+  const [updatingLead, setUpdatingLead] = useState<string | null>(null);
+
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  const [telegramStatus, setTelegramStatus] = useState<TelegramStatus | null>(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [broadcastText, setBroadcastText] = useState("");
+  const [broadcastResult, setBroadcastResult] = useState("");
+  const [broadcastSending, setBroadcastSending] = useState(false);
 
   const token = typeof window !== "undefined" ? sessionStorage.getItem("db_token") : "";
 
@@ -111,6 +161,13 @@ export default function Dashboard() {
   }, []);
 
   const load = useCallback(async (t: Tab) => {
+    if (t === "telegram") {
+      setTelegramLoading(true);
+      const res = await apiFetch(`/api/dashboard/telegram`);
+      setTelegramStatus(res.error ? null : res);
+      setTelegramLoading(false);
+      return;
+    }
     setLoading(true);
     const res = await apiFetch(`/api/dashboard?type=${t}`);
     const data = res.data;
@@ -121,9 +178,18 @@ export default function Dashboard() {
     setLoading(false);
   }, [apiFetch]);
 
+  const loadStats = useCallback(async () => {
+    const res = await apiFetch(`/api/dashboard?type=stats`);
+    if (!res.error) setStats(res);
+  }, [apiFetch]);
+
   useEffect(() => {
     if (authed) load(tab);
   }, [authed, tab, load]);
+
+  useEffect(() => {
+    if (authed) loadStats();
+  }, [authed, loadStats]);
 
   const login = async () => {
     const res = await fetch("/api/dashboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pass }) });
@@ -142,25 +208,73 @@ export default function Dashboard() {
     setMessages(data ?? []);
   };
 
-  const saveKnowledgeDoc = async () => {
-    if (!formSource.trim() || !formCategory.trim() || !formContent.trim()) {
-      setSaveError("همه فیلدها الزامی است");
-      return;
-    }
-    setSaving(true);
-    setSaveError("");
+  const putKnowledgeDoc = async (body: Record<string, unknown>) => {
     const t = sessionStorage.getItem("db_token");
     const res = await fetch("/api/dashboard", {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
-      body: JSON.stringify({ source: formSource, category: formCategory, content: formContent }),
+      body: JSON.stringify(body),
     });
     const json = await res.json();
+    return { ok: res.ok, json };
+  };
+
+  const saveKnowledgeDoc = async () => {
+    if (!formSource.trim() || !formCategory.trim()) {
+      setSaveError("عنوان و دسته‌بندی الزامی است");
+      return;
+    }
+    if (addMode !== "url" && !formContent.trim()) {
+      setSaveError("متن الزامی است");
+      return;
+    }
+    if (addMode === "url" && !formUrl.trim()) {
+      setSaveError("آدرس وب الزامی است");
+      return;
+    }
+    setSaving(true);
+    setSaveError("");
+    const body: Record<string, unknown> = { source: formSource, category: formCategory, tags: formTags };
+    if (addMode === "url") body.url = formUrl;
+    else { body.content = formContent; body.sourceType = addMode; }
+
+    const { ok, json } = await putKnowledgeDoc(body);
     setSaving(false);
-    if (!res.ok) { setSaveError(json.error ?? "خطا در ذخیره‌سازی"); return; }
+    if (!ok) { setSaveError(json.error ?? "خطا در ذخیره‌سازی"); return; }
     setShowAddForm(false);
-    setFormSource(""); setFormCategory(""); setFormContent("");
+    setFormSource(""); setFormCategory(""); setFormContent(""); setFormUrl(""); setFormTags(""); setAddMode("text");
     load("knowledge");
+  };
+
+  const onFileSelected = async (file: File) => {
+    const text = await file.text();
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const cleaned = ext === "html" || ext === "htm" ? text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : text;
+    setFormContent(cleaned);
+    if (!formSource.trim()) setFormSource(file.name.replace(/\.[^.]+$/, ""));
+  };
+
+  const rebuildDoc = async (doc: KnowledgeGroup) => {
+    setRebuildingSource(doc.source);
+    await putKnowledgeDoc({
+      source: doc.source,
+      category: doc.category,
+      content: doc.content,
+      tags: (doc.metadata?.tags ?? []).join(","),
+      sourceType: doc.metadata?.sourceType,
+    });
+    setRebuildingSource(null);
+    load("knowledge");
+  };
+
+  const runTestSearch = async () => {
+    if (!testQuery.trim()) return;
+    setTestLoading(true);
+    setTestError("");
+    const res = await apiFetch(`/api/dashboard?type=test-search&q=${encodeURIComponent(testQuery)}`);
+    setTestLoading(false);
+    if (res.error) { setTestError(res.error); setTestResults(null); return; }
+    setTestResults(res.data ?? []);
   };
 
   const deleteKnowledgeDoc = async (source: string) => {
@@ -174,6 +288,47 @@ export default function Dashboard() {
     });
     setDeletingSource(null);
     load("knowledge");
+  };
+
+  const updateLeadStatus = async (id: string, status: string) => {
+    setUpdatingLead(id);
+    const t = sessionStorage.getItem("db_token");
+    await fetch("/api/dashboard", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify({ id, status }),
+    });
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    setUpdatingLead(null);
+  };
+
+  const exportLeadsCsv = () => {
+    const rows = [
+      ["نام", "تلفن", "ایمیل", "منبع", "وضعیت", "یادداشت", "تاریخ"],
+      ...leads.map(l => [l.name ?? "", l.phone ?? "", l.email ?? "", l.source ?? "", l.status ?? "", l.notes ?? "", fmt(l.created_at)]),
+    ];
+    downloadCsv(`leads-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+  };
+
+  const telegramAction = async (body: Record<string, unknown>) => {
+    const t = sessionStorage.getItem("db_token");
+    const res = await fetch("/api/dashboard/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  };
+
+  const sendBroadcast = async () => {
+    if (!broadcastText.trim()) return;
+    setBroadcastSending(true);
+    setBroadcastResult("");
+    const res = await telegramAction({ action: "broadcast", text: broadcastText });
+    setBroadcastSending(false);
+    if (res.error) { setBroadcastResult(`خطا: ${res.error}`); return; }
+    setBroadcastResult(`ارسال شد: ${res.sent} از ${res.total} (${res.failed} ناموفق)`);
+    setBroadcastText("");
   };
 
   if (!authed) return (
@@ -206,11 +361,17 @@ export default function Dashboard() {
     { id: "contacts", label: "پیام‌های تماس", icon: "📩", count: contacts.length },
     { id: "leads", label: "لیدها", icon: "🎯", count: leads.length },
     { id: "knowledge", label: "دانش‌پایه", icon: "📚", count: knowledgeDocs.length },
+    { id: "telegram", label: "تلگرام", icon: "✈️", count: 0 },
   ];
 
   const categories = Array.from(new Set(knowledgeDocs.map(d => d.category)));
   const knowledgeGroups = groupBySource(knowledgeDocs);
   const visibleGroups = activeCat === "all" ? knowledgeGroups : knowledgeGroups.filter(d => d.category === activeCat);
+  const filteredLeads = leadSearch.trim()
+    ? leads.filter(l => [l.name, l.phone, l.email, l.notes].some(f => f?.toLowerCase().includes(leadSearch.trim().toLowerCase())))
+    : leads;
+  const maxChannelCount = stats ? Math.max(1, ...Object.values(stats.channelCounts)) : 1;
+  const CHANNEL_LABEL: Record<string, string> = { web: "وب‌سایت", telegram: "تلگرام" };
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "Vazirmatn, system-ui", direction: "rtl" }}>
@@ -233,10 +394,10 @@ export default function Dashboard() {
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem" }}>
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: "2rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 16 }}>
           {[
             { label: "کل مکالمات", value: sessions.length, color: C.teal, icon: "💬" },
-            { label: "پیام‌های تماس", value: contacts.length, color: C.blue, icon: "📩" },
+            { label: "کاربران یکتا", value: stats?.uniqueUsers ?? "—", color: C.blue, icon: "👤" },
             { label: "لیدها", value: leads.length, color: "#9B6BE0", icon: "🎯" },
             { label: "اسناد دانش‌پایه", value: knowledgeDocs.length, color: C.teal, icon: "📚" },
           ].map(s => (
@@ -249,6 +410,50 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: "2rem" }}>
+          {[
+            { label: "نرخ رضایت", value: stats?.satisfactionRate != null ? `${stats.satisfactionRate}%` : "—", color: C.teal, icon: "😊" },
+            { label: "نرخ تبدیل به لید", value: stats ? `${stats.conversionRate}%` : "—", color: C.blue, icon: "📈" },
+            { label: "سوالات بی‌جواب", value: stats?.unansweredCount ?? "—", color: "#e0a555", icon: "❓" },
+            { label: "هزینه تخمینی", value: stats ? `$${stats.totalCost.toFixed(4)}` : "—", color: "#9B6BE0", icon: "💰" },
+          ].map(s => (
+            <div key={s.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: 28 }}>{s.icon}</span>
+              <div>
+                <div style={{ color: s.color, fontSize: 24, fontWeight: 800, lineHeight: 1 }}>{s.value}</div>
+                <div style={{ color: C.dim, fontSize: 13, marginTop: 2 }}>{s.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {stats && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: "2rem" }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem" }}>
+              <div style={{ color: C.mint, fontWeight: 700, fontSize: 13.5, marginBottom: 12 }}>گفتگوها به تفکیک کانال</div>
+              {Object.entries(stats.channelCounts).map(([ch, count]) => (
+                <div key={ch} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <span style={{ color: C.dim, fontSize: 12, width: 60, flexShrink: 0 }}>{CHANNEL_LABEL[ch] ?? ch}</span>
+                  <div style={{ flex: 1, background: "rgba(29,158,117,0.1)", borderRadius: 999, height: 10, overflow: "hidden" }}>
+                    <div style={{ width: `${(count / maxChannelCount) * 100}%`, background: C.teal, height: "100%", borderRadius: 999 }} />
+                  </div>
+                  <span style={{ color: C.mint, fontSize: 12, width: 24, textAlign: "left", fontVariantNumeric: "tabular-nums" }}>{count}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem" }}>
+              <div style={{ color: C.mint, fontWeight: 700, fontSize: 13.5, marginBottom: 12 }}>مصرف توکن و هزینه به تفکیک مدل</div>
+              {stats.modelStats.length === 0 && <div style={{ color: C.dim, fontSize: 12 }}>هنوز داده‌ای ثبت نشده</div>}
+              {stats.modelStats.map(m => (
+                <div key={m.model} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "6px 0", borderBottom: `1px solid ${C.border}` }}>
+                  <span style={{ color: C.dim, fontFamily: "monospace", direction: "ltr" }}>{m.model}</span>
+                  <span style={{ color: C.dim }}>{m.count} پاسخ</span>
+                  <span style={{ color: C.teal, fontVariantNumeric: "tabular-nums" }}>${m.cost.toFixed(4)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 8, marginBottom: "1.5rem", borderBottom: `1px solid ${C.border}`, paddingBottom: "1rem" }}>
@@ -328,9 +533,19 @@ export default function Dashboard() {
 
         {/* Leads */}
         {!loading && tab === "leads" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {leads.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "3rem" }}>لیدی یافت نشد</div>}
-            {leads.map(l => (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                placeholder="جستجو در نام، تلفن، ایمیل یا یادداشت..." value={leadSearch}
+                onChange={e => setLeadSearch(e.target.value)}
+                style={{ flex: 1, minWidth: 200, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, color: C.mint, padding: "9px 14px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+              />
+              <button onClick={exportLeadsCsv} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, color: C.dim, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                خروجی CSV
+              </button>
+            </div>
+            {filteredLeads.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "3rem" }}>لیدی یافت نشد</div>}
+            {filteredLeads.map(l => (
               <div key={l.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(155,107,224,0.15)", border: "1px solid #9B6BE0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🎯</div>
                 <div style={{ flex: 1 }}>
@@ -342,6 +557,14 @@ export default function Dashboard() {
                   </div>
                   {l.notes && <div style={{ color: C.dim, fontSize: 12, marginTop: 4 }}>{l.notes}</div>}
                 </div>
+                <select
+                  value={l.status ?? "جدید"}
+                  disabled={updatingLead === l.id}
+                  onChange={e => updateLeadStatus(l.id, e.target.value)}
+                  style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "6px 10px", fontSize: 12, fontFamily: "inherit", flexShrink: 0 }}
+                >
+                  {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
                 <span style={{ color: C.dim, fontSize: 12, flexShrink: 0 }}>{fmt(l.created_at)}</span>
               </div>
             ))}
@@ -392,6 +615,15 @@ export default function Dashboard() {
 
               {showAddForm && (
                 <div style={{ background: C.surface, border: `1px solid ${C.teal}`, borderRadius: 14, padding: "1.1rem 1.35rem", marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {([["text", "متن"], ["file", "فایل"], ["url", "آدرس وب"]] as [AddMode, string][]).map(([mode, label]) => (
+                      <button key={mode} onClick={() => setAddMode(mode)} style={{
+                        background: addMode === mode ? "rgba(29,158,117,0.15)" : "transparent",
+                        border: `1px solid ${addMode === mode ? C.teal : C.border}`, borderRadius: 8,
+                        color: addMode === mode ? C.mint : C.dim, padding: "5px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                      }}>{label}</button>
+                    ))}
+                  </div>
                   <input
                     placeholder="عنوان سند (مثلاً: خدمات طراحی وب)" value={formSource}
                     onChange={e => setFormSource(e.target.value)}
@@ -406,19 +638,81 @@ export default function Dashboard() {
                   <datalist id="cat-suggestions">
                     {categories.map(cat => <option key={cat} value={cat} />)}
                   </datalist>
-                  <textarea
-                    placeholder="متن کامل سند (می‌تونی از # و ## برای تیتر و - برای لیست استفاده کنی)" value={formContent}
-                    onChange={e => setFormContent(e.target.value)}
-                    rows={8}
-                    style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical" }}
+
+                  {addMode === "text" && (
+                    <textarea
+                      placeholder="متن کامل سند (می‌تونی از # و ## برای تیتر و - برای لیست استفاده کنی)" value={formContent}
+                      onChange={e => setFormContent(e.target.value)}
+                      rows={8}
+                      style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical" }}
+                    />
+                  )}
+
+                  {addMode === "file" && (
+                    <div>
+                      <input
+                        type="file" accept=".txt,.md,.html,.htm,.csv"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) onFileSelected(f); }}
+                        style={{ color: C.dim, fontSize: 13, fontFamily: "inherit" }}
+                      />
+                      {formContent && (
+                        <div style={{ marginTop: 8, color: C.dim, fontSize: 11 }}>{formContent.length.toLocaleString("fa-IR")} کاراکتر خوانده شد</div>
+                      )}
+                    </div>
+                  )}
+
+                  {addMode === "url" && (
+                    <input
+                      placeholder="https://example.com/page" value={formUrl}
+                      onChange={e => setFormUrl(e.target.value)}
+                      dir="ltr"
+                      style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                    />
+                  )}
+
+                  <input
+                    placeholder="برچسب‌ها (اختیاری، با ویرگول جدا کنید)" value={formTags}
+                    onChange={e => setFormTags(e.target.value)}
+                    style={{ background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
                   />
                   {saveError && <div style={{ color: "#e05555", fontSize: 12 }}>{saveError}</div>}
                   <button onClick={saveKnowledgeDoc} disabled={saving} style={{
                     background: C.teal, color: "#042019", border: "none", borderRadius: 8, padding: "10px",
                     fontWeight: 700, fontSize: 13, cursor: saving ? "default" : "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1,
-                  }}>{saving ? "در حال ایندکس‌کردن..." : "ذخیره و ایندکس در RAG"}</button>
+                  }}>{saving ? "در حال ایندکس‌کردن..." : "افزودن و ایندکس"}</button>
                 </div>
               )}
+
+              <div style={{ background: "rgba(29,158,117,0.05)", border: `1px dashed ${C.border}`, borderRadius: 14, padding: "1rem 1.25rem", marginBottom: 14 }}>
+                <div style={{ color: C.mint, fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🔍 جست‌وجوی آزمایشی</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    placeholder="یک سوال آزمایشی بنویسید تا chunk‌های بازیابی‌شده را ببینید..." value={testQuery}
+                    onChange={e => setTestQuery(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && runTestSearch()}
+                    style={{ flex: 1, background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "8px 12px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                  />
+                  <button onClick={runTestSearch} disabled={testLoading} style={{
+                    background: C.teal, color: "#042019", border: "none", borderRadius: 8, padding: "0 18px",
+                    fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                  }}>{testLoading ? "..." : "جست‌وجو"}</button>
+                </div>
+                {testError && <div style={{ color: "#e05555", fontSize: 12, marginTop: 8 }}>{testError}</div>}
+                {testResults && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                    {testResults.length === 0 && <div style={{ color: C.dim, fontSize: 12 }}>نتیجه‌ای یافت نشد</div>}
+                    {testResults.map(r => (
+                      <div key={r.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ color: C.blue, fontSize: 11, fontWeight: 700 }}>{r.source}</span>
+                          <span style={{ color: C.teal, fontSize: 11 }}>شباهت: {Math.round(r.similarity * 100)}%</span>
+                        </div>
+                        <div style={{ color: C.dim, fontSize: 12, lineHeight: 1.7 }}>{r.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
                 <button onClick={() => setActiveCat("all")} style={{
@@ -439,11 +733,22 @@ export default function Dashboard() {
                 {knowledgeGroups.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "3rem" }}>سندی یافت نشد</div>}
                 {visibleGroups.map(doc => (
                   <div key={doc.source} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.1rem 1.35rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${C.border}`, flexWrap: "wrap" }}>
                       <span style={{ color: C.mint, fontWeight: 700, fontSize: 13.5 }}>{doc.source}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+                        {doc.metadata?.sourceType && <span style={{ background: "rgba(55,138,221,0.12)", color: C.blue, borderRadius: 999, padding: "2px 10px", fontSize: 10.5, fontFamily: "monospace" }}>{doc.metadata.sourceType}</span>}
                         <span style={{ background: "rgba(29,158,117,0.12)", color: C.teal, borderRadius: 999, padding: "2px 10px", fontSize: 10.5, fontFamily: "monospace" }}>{doc.category}</span>
-                        <span style={{ color: C.dim, fontSize: 10.5 }}>{doc.chunkCount} chunk</span>
+                        {(doc.metadata?.tags ?? []).map(tag => (
+                          <span key={tag} style={{ background: "rgba(155,107,224,0.12)", color: "#9B6BE0", borderRadius: 999, padding: "2px 10px", fontSize: 10.5 }}>{tag}</span>
+                        ))}
+                        <span style={{ color: C.dim, fontSize: 10.5 }}>{doc.chunkCount} قطعه</span>
+                        <button
+                          onClick={() => rebuildDoc(doc)}
+                          disabled={rebuildingSource === doc.source}
+                          style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 8, color: C.dim, padding: "3px 10px", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}
+                        >
+                          {rebuildingSource === doc.source ? "..." : "بازسازی"}
+                        </button>
                         <button
                           onClick={() => deleteKnowledgeDoc(doc.source)}
                           disabled={deletingSource === doc.source}
@@ -457,6 +762,65 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Telegram */}
+        {!loading && tab === "telegram" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <span style={{ color: C.mint, fontWeight: 700, fontSize: 14 }}>✈️ وضعیت بات تلگرام</span>
+                <button onClick={() => load("telegram")} disabled={telegramLoading} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, color: C.dim, padding: "5px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                  {telegramLoading ? "..." : "تازه‌سازی"}
+                </button>
+              </div>
+              {telegramLoading && !telegramStatus && <div style={{ color: C.dim, fontSize: 13 }}>در حال بارگذاری...</div>}
+              {telegramStatus && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <span style={{ color: C.dim, width: 140, flexShrink: 0 }}>وضعیت Webhook:</span>
+                    <span style={{ color: telegramStatus.webhook?.url ? C.teal : "#e05555" }}>{telegramStatus.webhook?.url ? "✅ فعال" : "❌ تنظیم نشده"}</span>
+                  </div>
+                  {telegramStatus.webhook?.url && (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ color: C.dim, width: 140, flexShrink: 0 }}>آدرس Webhook:</span>
+                      <span style={{ color: C.mint, fontFamily: "monospace", fontSize: 11, direction: "ltr", wordBreak: "break-all" }}>{telegramStatus.webhook.url}</span>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <span style={{ color: C.dim, width: 140, flexShrink: 0 }}>پیام‌های در صف:</span>
+                    <span style={{ color: C.mint }}>{telegramStatus.webhook?.pending_update_count ?? 0}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <span style={{ color: C.dim, width: 140, flexShrink: 0 }}>کاربران تلگرام:</span>
+                    <span style={{ color: C.mint }}>{telegramStatus.userCount}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button onClick={async () => { await telegramAction({ action: "set-webhook" }); load("telegram"); }} style={{ background: C.teal, color: "#042019", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>تنظیم دوباره Webhook</button>
+                    <button onClick={async () => { await telegramAction({ action: "delete-webhook" }); load("telegram"); }} style={{ background: "none", border: "1px solid rgba(224,85,85,0.4)", borderRadius: 8, color: "#e05555", padding: "8px 16px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>حذف Webhook</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "1.25rem 1.5rem" }}>
+              <div style={{ color: C.mint, fontWeight: 700, fontSize: 14, marginBottom: 10 }}>📢 پیام همگانی (Broadcast)</div>
+              <textarea
+                placeholder="پیامی که می‌خواهید برای همه‌ی کاربران تلگرام ارسال شود..." value={broadcastText}
+                onChange={e => setBroadcastText(e.target.value)}
+                rows={4}
+                style={{ width: "100%", background: "rgba(8,80,65,0.3)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.mint, padding: "9px 12px", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
+              />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                <span style={{ color: C.dim, fontSize: 12 }}>{telegramStatus?.userCount ?? 0} گیرنده</span>
+                <button onClick={sendBroadcast} disabled={broadcastSending || !broadcastText.trim()} style={{
+                  background: C.teal, color: "#042019", border: "none", borderRadius: 8, padding: "8px 18px",
+                  fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", opacity: broadcastSending ? 0.6 : 1,
+                }}>{broadcastSending ? "در حال ارسال..." : "ارسال به همه"}</button>
+              </div>
+              {broadcastResult && <div style={{ color: C.dim, fontSize: 12, marginTop: 8 }}>{broadcastResult}</div>}
             </div>
           </div>
         )}

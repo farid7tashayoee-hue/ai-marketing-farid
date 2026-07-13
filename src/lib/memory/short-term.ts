@@ -50,15 +50,36 @@ export async function getSessionMessages(
   return (data ?? []) as CoreMessage[];
 }
 
+export interface SaveMessageMeta {
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  ragSources?: unknown;
+}
+
 export async function saveMessage(
   sessionId: string,
   role: "user" | "assistant",
-  content: string
-): Promise<void> {
+  content: string,
+  meta?: SaveMessageMeta
+): Promise<string | undefined> {
   const supabase = createServerClient();
-  await supabase.from("messages").insert({ session_id: sessionId, role, content });
+  const { data } = await supabase
+    .from("messages")
+    .insert({
+      session_id: sessionId,
+      role,
+      content,
+      model: meta?.model,
+      input_tokens: meta?.inputTokens,
+      output_tokens: meta?.outputTokens,
+      rag_sources: meta?.ragSources,
+    })
+    .select("id")
+    .single();
   await supabase
     .from("sessions")
     .update({ last_activity: new Date().toISOString() })
     .eq("id", sessionId);
+  return data?.id;
 }

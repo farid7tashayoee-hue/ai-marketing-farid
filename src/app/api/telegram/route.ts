@@ -32,15 +32,20 @@ export async function POST(req: NextRequest) {
     { role: "user", content: text },
   ];
 
-  const reply = await runAgent({
+  const result = await runAgent({
     sessionId,
     userId,
     messages,
     channel: "telegram",
   });
 
-  await saveMessage(sessionId, "assistant", reply);
-  await sendTelegramMessage(chat.id, reply);
+  await saveMessage(sessionId, "assistant", result.text, {
+    model: result.model,
+    inputTokens: result.usage.promptTokens,
+    outputTokens: result.usage.completionTokens,
+    ragSources: result.ragSources,
+  });
+  await sendTelegramMessage(chat.id, result.text);
 
   return NextResponse.json({ ok: true });
 }

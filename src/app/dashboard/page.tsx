@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 
-type Tab = "conversations" | "contacts" | "leads" | "knowledge" | "telegram";
+type Tab = "conversations" | "contacts" | "leads" | "knowledge" | "telegram" | "feedback";
 type AddMode = "text" | "file" | "url";
 
 interface Session {
@@ -10,7 +10,10 @@ interface Session {
 }
 interface Contact { id: string; name: string; email: string; message: string; created_at: string; }
 interface Lead { id: string; name?: string; email?: string; phone?: string; notes?: string; source?: string; status?: string; created_at: string; }
-interface Message { role: string; content: string; created_at: string; }
+interface RagSourceCited { source: string; similarity: number; }
+interface Message { role: string; content: string; created_at: string; rag_sources?: RagSourceCited[] | null; }
+interface UnansweredQuestion { id: string; question: string; created_at: string; }
+interface NegativeFeedback { id: string; content: string; created_at: string; }
 interface DocMetadata { sourceType?: string; tags?: string[]; }
 interface KnowledgeDoc { id: string; source: string; category: string; content: string; metadata?: DocMetadata; created_at: string; }
 interface KnowledgeGroup { source: string; category: string; content: string; chunkCount: number; metadata?: DocMetadata; }
@@ -152,6 +155,10 @@ export default function Dashboard() {
   const [broadcastResult, setBroadcastResult] = useState("");
   const [broadcastSending, setBroadcastSending] = useState(false);
 
+  const [unanswered, setUnanswered] = useState<UnansweredQuestion[]>([]);
+  const [negativeFeedback, setNegativeFeedback] = useState<NegativeFeedback[]>([]);
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
+
   const token = typeof window !== "undefined" ? sessionStorage.getItem("db_token") : "";
 
   const apiFetch = useCallback(async (url: string) => {
@@ -175,6 +182,7 @@ export default function Dashboard() {
     if (t === "contacts") setContacts(data ?? []);
     if (t === "leads") setLeads(data ?? []);
     if (t === "knowledge") { setKnowledgeDocs(data ?? []); setSystemPrompt(res.systemPrompt ?? ""); }
+    if (t === "feedback") { setUnanswered(res.unanswered ?? []); setNegativeFeedback(res.negativeFeedback ?? []); }
     setLoading(false);
   }, [apiFetch]);
 
@@ -310,6 +318,18 @@ export default function Dashboard() {
     downloadCsv(`leads-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   };
 
+  const dismissUnanswered = async (id: string) => {
+    setDismissingId(id);
+    const t = sessionStorage.getItem("db_token");
+    await fetch("/api/dashboard", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify({ unansweredId: id }),
+    });
+    setUnanswered(prev => prev.filter(q => q.id !== id));
+    setDismissingId(null);
+  };
+
   const telegramAction = async (body: Record<string, unknown>) => {
     const t = sessionStorage.getItem("db_token");
     const res = await fetch("/api/dashboard/telegram", {
@@ -362,6 +382,7 @@ export default function Dashboard() {
     { id: "leads", label: "لیدها", icon: "🎯", count: leads.length },
     { id: "knowledge", label: "دانش‌پایه", icon: "📚", count: knowledgeDocs.length },
     { id: "telegram", label: "تلگرام", icon: "✈️", count: 0 },
+    { id: "feedback", label: "بازخورد", icon: "👎", count: unanswered.length + negativeFeedback.length },
   ];
 
   const categories = Array.from(new Set(knowledgeDocs.map(d => d.category)));
@@ -496,10 +517,19 @@ export default function Dashboard() {
                 {openSession === s.id && (
                   <div style={{ borderTop: `1px solid ${C.border}`, padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: 10, maxHeight: 360, overflowY: "auto", background: "rgba(5,31,26,0.5)" }}>
                     {messages.map((m, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, justifyContent: m.role === "user" ? "flex-start" : "flex-end", direction: "ltr" }}>
+                      <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: m.role === "user" ? "flex-start" : "flex-end", direction: "ltr" }}>
                         <div style={{ maxWidth: "75%", padding: "8px 14px", borderRadius: m.role === "user" ? "12px 12px 12px 3px" : "12px 12px 3px 12px", background: m.role === "user" ? "rgba(8,80,65,0.7)" : "rgba(29,158,117,0.12)", border: `1px solid ${m.role === "user" ? "rgba(8,80,65,0.5)" : "rgba(29,158,117,0.25)"}`, color: C.mint, fontSize: 13, lineHeight: 1.6, direction: "auto" as any }}>
                           {m.content}
                         </div>
+                        {m.role === "assistant" && m.rag_sources && m.rag_sources.length > 0 && (
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", maxWidth: "75%" }}>
+                            {m.rag_sources.map((s, si) => (
+                              <span key={si} style={{ fontSize: 10, color: C.dim, background: "rgba(55,138,221,0.1)", border: "1px solid rgba(55,138,221,0.25)", borderRadius: 999, padding: "1px 8px" }}>
+                                {s.source} · {Math.round(s.similarity * 100)}%
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -821,6 +851,53 @@ export default function Dashboard() {
                 }}>{broadcastSending ? "در حال ارسال..." : "ارسال به همه"}</button>
               </div>
               {broadcastResult && <div style={{ color: C.dim, fontSize: 12, marginTop: 8 }}>{broadcastResult}</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Feedback */}
+        {!loading && tab === "feedback" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div>
+              <div style={{ color: C.mint, fontWeight: 700, fontSize: 14, marginBottom: 10 }}>
+                ❓ سوالات بی‌جواب ({unanswered.length})
+              </div>
+              <div style={{ color: C.dim, fontSize: 12, marginBottom: 12 }}>
+                این سوالات منبعی در پایگاه دانش نداشتند — کاندیدای خوبی برای افزودن سند جدید هستند.
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {unanswered.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "2rem" }}>سوال بی‌جوابی ثبت نشده</div>}
+                {unanswered.map(q => (
+                  <div key={q.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "0.9rem 1.1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                    <div>
+                      <div style={{ color: C.mint, fontSize: 13.5 }}>{q.question}</div>
+                      <div style={{ color: C.dim, fontSize: 11, marginTop: 3 }}>{fmt(q.created_at)}</div>
+                    </div>
+                    <button
+                      onClick={() => dismissUnanswered(q.id)}
+                      disabled={dismissingId === q.id}
+                      style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 8, color: C.dim, padding: "5px 12px", fontSize: 11, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                    >
+                      {dismissingId === q.id ? "..." : "رد کردن"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: C.mint, fontWeight: 700, fontSize: 14, marginBottom: 10 }}>
+                👎 بازخوردهای منفی ({negativeFeedback.length})
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {negativeFeedback.length === 0 && <div style={{ color: C.dim, textAlign: "center", padding: "2rem" }}>بازخورد منفی‌ای ثبت نشده</div>}
+                {negativeFeedback.map(f => (
+                  <div key={f.id} style={{ background: C.surface, border: "1px solid rgba(224,85,85,0.25)", borderRadius: 12, padding: "0.9rem 1.1rem" }}>
+                    <div style={{ color: C.mint, fontSize: 13.5, lineHeight: 1.7 }}>{f.content}</div>
+                    <div style={{ color: C.dim, fontSize: 11, marginTop: 5 }}>{fmt(f.created_at)}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

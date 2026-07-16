@@ -165,10 +165,33 @@ export async function GET(req: NextRequest) {
     if (!sid) return NextResponse.json({ error: "session required" }, { status: 400 });
     const { data } = await db
       .from("messages")
-      .select("role, content, created_at")
+      .select("role, content, created_at, rag_sources")
       .eq("session_id", sid)
       .order("created_at", { ascending: true });
     return NextResponse.json({ data: data ?? [] });
+  }
+
+  if (type === "feedback") {
+    const { data: unanswered } = await db
+      .from("unanswered_questions")
+      .select("id, question, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    const { data: negative } = await db
+      .from("message_feedback")
+      .select("id, created_at, message_id, messages(content)")
+      .eq("rating", "down")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    const negativeFeedback = (negative ?? []).map((f) => ({
+      id: f.id,
+      created_at: f.created_at,
+      content: (f.messages as unknown as { content: string } | null)?.content ?? "",
+    }));
+
+    return NextResponse.json({ unanswered: unanswered ?? [], negativeFeedback });
   }
 
   return NextResponse.json({ error: "Unknown type" }, { status: 400 });
@@ -222,10 +245,16 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { source } = await req.json();
-  if (!source?.trim()) return NextResponse.json({ error: "source الزامی است" }, { status: 400 });
-
+  const { source, unansweredId } = await req.json();
   const db = getAdmin();
+
+  if (unansweredId) {
+    const { error } = await db.from("unanswered_questions").delete().eq("id", unansweredId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!source?.trim()) return NextResponse.json({ error: "source الزامی است" }, { status: 400 });
   const { error } = await db.from("documents").delete().eq("source", source.trim());
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

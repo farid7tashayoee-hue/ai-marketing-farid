@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind utilities;
 @tailwind components;
+
+elevenlabs-convai {
+  position: fixed !important;
+  bottom: 96px !important;
+  right: 20px !important;
+}

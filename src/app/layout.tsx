@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <elevenlabs-convai
           agent-id="agent_0201kxnzfxqjesw9jyy5m21aq0w4"
           variant="tiny"
-          avatar-image-url="/icons/phone-ring.svg"
+          avatar-image-url="https://ai-marketing-farid.vercel.app/icons/phone-ring.svg"
         ></elevenlabs-convai>
         <Script src="/js/convai-widget-embed.js" strategy="afterInteractive" />
       </body>

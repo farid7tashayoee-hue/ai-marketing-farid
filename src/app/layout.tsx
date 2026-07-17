@@ -33,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           variant="compact"
           text-input="false"
           default-expanded="false"
+          dynamic-variables='{"website_owner_name":"Farid Tashayoee"}'
         ></elevenlabs-convai>
         <Script src="/js/convai-widget-embed.js" strategy="afterInteractive" />
       </body>

@@ -7,6 +7,7 @@ declare namespace JSX {
       "avatar-image-url"?: string;
       "text-input"?: string;
       "default-expanded"?: string;
+      "dynamic-variables"?: string;
     };
   }
 }

@@ -53,7 +53,7 @@ export default function ChatWidget() {
       {/* Notification popup */}
       {showNotif && !open && (
         <div
-          className="fixed bottom-24 left-6 z-50 flex items-end gap-2 cursor-pointer animate-bounce-in"
+          className="fixed bottom-24 left-6 z-[150] flex items-end gap-2 cursor-pointer animate-bounce-in"
           onClick={handleOpen}
           style={{animation: "slideUp 0.4s ease-out"}}
         >
@@ -77,7 +77,7 @@ export default function ChatWidget() {
       {/* Floating button */}
       <button
         onClick={() => { setOpen((v) => !v); setShowNotif(false); }}
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
+        className="fixed bottom-6 left-6 z-[150] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
         style={{background: "linear-gradient(135deg, #1D9E75, #085041)"}}
         aria-label="باز کردن چت"
       >
@@ -92,7 +92,7 @@ export default function ChatWidget() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 left-6 z-50 w-80 sm:w-96">
+        <div className="fixed bottom-24 left-6 z-[150] w-80 sm:w-96">
           <ChatWindow onClose={() => setOpen(false)} lang={lang} />
         </div>
       )}

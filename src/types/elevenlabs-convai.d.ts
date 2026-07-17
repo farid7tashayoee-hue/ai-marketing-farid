@@ -5,6 +5,8 @@ declare namespace JSX {
       variant?: string;
       placement?: string;
       "avatar-image-url"?: string;
+      "text-input"?: string;
+      "default-expanded"?: string;
     };
   }
 }

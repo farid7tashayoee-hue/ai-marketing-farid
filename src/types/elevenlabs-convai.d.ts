@@ -4,6 +4,7 @@ declare namespace JSX {
       "agent-id"?: string;
       variant?: string;
       placement?: string;
+      "avatar-image-url"?: string;
     };
   }
 }

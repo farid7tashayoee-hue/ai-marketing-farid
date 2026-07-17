@@ -28,6 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script src="/js/supabase.js" strategy="afterInteractive" />
         <Script src="/js/i18n.js" strategy="afterInteractive" />
         <Script src="/js/main.js" strategy="afterInteractive" />
+        {/* @ts-expect-error -- custom element from ElevenLabs widget */}
+        <elevenlabs-convai agent-id="agent_0201kxnzfxqjesw9jyy5m21aq0w4"></elevenlabs-convai>
+        <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed" strategy="afterInteractive" />
       </body>
     </html>
   );

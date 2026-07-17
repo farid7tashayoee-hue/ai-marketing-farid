@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script src="/js/main.js" strategy="afterInteractive" />
         <elevenlabs-convai
           agent-id="agent_0201kxnzfxqjesw9jyy5m21aq0w4"
-          variant="tiny"
+          variant="compact"
           text-input="false"
           default-expanded="false"
           avatar-image-url="https://ai-marketing-farid.vercel.app/icons/phone-ring.svg"

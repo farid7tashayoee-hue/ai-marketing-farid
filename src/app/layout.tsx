@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           variant="tiny"
           avatar-image-url="/icons/phone-ring.svg"
         ></elevenlabs-convai>
-        <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed" strategy="afterInteractive" />
+        <Script src="/js/convai-widget-embed.js" strategy="afterInteractive" />
       </body>
     </html>
   );

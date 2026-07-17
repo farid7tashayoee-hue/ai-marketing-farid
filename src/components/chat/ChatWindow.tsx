@@ -81,7 +81,7 @@ export default function ChatWindow({ onClose, lang = "fa" }: { onClose: () => vo
 
   return (
     <div className="flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-secondary/30"
-      style={{ background: "#0a2e26", height: "480px" }}>
+      style={{ background: "#0a2e26", height: "min(480px, calc(100vh - 160px))" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-primary">
         <div className="flex items-center gap-2">

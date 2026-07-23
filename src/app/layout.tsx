@@ -30,9 +30,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script src="/js/main.js" strategy="afterInteractive" />
         <elevenlabs-convai
           agent-id="agent_0201kxnzfxqjesw9jyy5m21aq0w4"
-          variant="compact"
+          variant="tiny"
           text-input="false"
-          default-expanded="false"
           dynamic-variables='{"website_owner_name":"Farid Tashayoee"}'
         ></elevenlabs-convai>
         <Script src="/js/convai-widget-embed.js" strategy="afterInteractive" />

@@ -7,5 +7,40 @@ elevenlabs-convai {
   bottom: 180px !important;
   right: 20px !important;
   z-index: 2147483000 !important;
-  filter: drop-shadow(0 4px 14px rgba(0,0,0,0.35));
+  filter: drop-shadow(0 4px 14px rgba(8, 80, 65, 0.45));
+  --el-accent-primary: #1D9E75;
+  --el-accent-hover: #24b586;
+  --el-accent-active: #085041;
+  --el-base-primary: #E1F5EE;
+  --el-base-hover: #0d6a55;
+  --el-base-active: #085041;
+  --el-base-border: #1D9E75;
+}
+
+.ft-voice-cta {
+  position: fixed;
+  bottom: 196px;
+  right: 84px;
+  z-index: 2147483000;
+  background: rgba(8, 80, 65, 0.92);
+  color: #E1F5EE;
+  font-family: Vazirmatn, "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(29, 158, 117, 0.5);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: ft-cta-fade 0.5s ease-out 0.3s both;
+}
+
+@keyframes ft-cta-fade {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 480px) {
+  .ft-voice-cta { display: none; }
 }

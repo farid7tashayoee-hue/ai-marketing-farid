@@ -28,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script src="/js/supabase.js" strategy="afterInteractive" />
         <Script src="/js/i18n.js" strategy="afterInteractive" />
         <Script src="/js/main.js" strategy="afterInteractive" />
+        <span className="ft-voice-cta">🎙 صحبت با فرید</span>
         <elevenlabs-convai
           agent-id="agent_0201kxnzfxqjesw9jyy5m21aq0w4"
           variant="tiny"
